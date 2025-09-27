@@ -229,7 +229,7 @@ MIT License. See LICENSE file for details.
 5. Submit a pull request
 
 ## Credits
-
+ 
 - Developed by Jack Nerad with assistance from Claude (Anthropic) and ChatGPT GPT-4.1 (OpenAI) AI Assistants
 - Built with a custom XML parser that supports both `lxml` and Python's built-in XML parsing
 - Inspired by Django's ORM design patterns
