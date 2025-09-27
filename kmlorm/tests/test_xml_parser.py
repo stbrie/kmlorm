@@ -1068,3 +1068,83 @@ class TestXMLKMLParser:
             '<MultiGeometry xmlns="http://www.opengis.net/kml/2.2"></MultiGeometry>'
         )
         assert parser._create_multigeometry_from_element(mg_elem) is None
+
+    def test_google_earth_entity_preprocessing(self) -> None:
+        """
+        Test that XMLKMLParser can handle Google Earth KML with unescaped XML entities.
+
+        This test verifies that:
+        - KML with unescaped ampersands in URLs/metadata is parsed successfully
+        - The preprocessing method correctly escapes common XML entities
+        - Normal KML files continue to work without preprocessing
+        """
+        parser = XMLKMLParser()
+
+        # KML with unescaped entities (typical Google Earth metadata URL pattern)
+        # pylint: disable=line-too-long
+        kml_with_unescaped_entities = (
+            '<kml xmlns="http://www.opengis.net/kml/2.2">'
+            "<Document>"
+            "<name>Google Earth Test</name>"
+            "<description>Testing unescaped entities in metadata URLs</description>"
+            "<Placemark>"
+            "<name>Test Place</name>"
+            "<description>URL with unescaped entities: http://example.com?foo=bar&amp=123&baz=456</description>"  # noqa: E501
+            "<Point><coordinates>-122.4194,37.7749,0</coordinates></Point>"
+            "</Placemark>"
+            "</Document>"
+            "</kml>"
+        )
+
+        # This should now work because we preprocess Google Earth metadata URLs
+        doc_name, doc_description, elements = parser.parse_from_string(kml_with_unescaped_entities)
+        assert doc_name == "Google Earth Test"
+        assert doc_description is not None
+        assert len(elements) > 0
+
+        # Verify the placemark was parsed correctly
+        placemark = next((e for e in elements if getattr(e, "name", None) == "Test Place"), None)
+        assert placemark is not None
+        assert "http://example.com?foo=bar&amp=123&baz=456" in placemark.description
+
+    def test_preprocess_google_earth_entities_method(self) -> None:
+        """
+        Test the _preprocess_google_earth_entities method directly.
+
+        Verifies that:
+        - Unescaped ampersands are properly escaped
+        - Already escaped entities are not double-escaped
+        - The method handles various entity patterns correctly
+        """
+        # Test basic entity escaping
+        input_text = "URL: http://example.com?foo=bar&baz=123"
+        expected = "URL: http://example.com?foo=bar&amp;baz=123"
+        result = XMLKMLParser._preprocess_google_earth_entities(input_text)
+        assert result == expected
+
+        # Test that already escaped entities are not double-escaped
+        input_text = "Already escaped: &amp; &lt; &gt; &quot;"
+        result = XMLKMLParser._preprocess_google_earth_entities(input_text)
+        assert result == input_text  # Should remain unchanged
+
+        # Test mixed content
+        input_text = "Mixed: &amp; and & and more &"
+        expected = "Mixed: &amp; and &amp; and more &amp;"
+        result = XMLKMLParser._preprocess_google_earth_entities(input_text)
+        assert result == expected
+
+    def test_fallback_parsing_preserves_original_error(self) -> None:
+        """
+        Test that when both normal parsing and preprocessing fail,
+        the original parsing error is preserved.
+        """
+        parser = XMLKMLParser()
+
+        # Completely invalid XML that can't be fixed by entity preprocessing
+        invalid_xml = "<kml><Document><name>Bad</name>"  # missing closing tags
+
+        with pytest.raises(KMLParseError) as excinfo:
+            parser.parse_from_string(invalid_xml)
+
+        # Should get the original XMLSyntaxError wrapped in KMLParseError
+        assert "Invalid XML syntax" in str(excinfo.value)

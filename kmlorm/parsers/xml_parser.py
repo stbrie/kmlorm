@@ -6,7 +6,7 @@ dependencies, focusing on extracting data for Django-style access rather
 than geospatial calculations.
 """
 
-# pylint: disable= too-many-branches, import-outside-toplevel
+# pylint: disable= too-many-branches, import-outside-toplevel, too-many-lines
 import logging
 import os
 import xml.etree.ElementTree as _et
@@ -96,6 +96,9 @@ class XMLKMLParser:
         """
         Parse KML content string and extract elements.
 
+        Supports Google Earth KML files with unescaped XML entities by attempting
+        preprocessing when standard XML parsing fails.
+
         Args:
             kml_content: KML content as string or bytes
 
@@ -113,7 +116,19 @@ class XMLKMLParser:
 
             root = etree.fromstring(content_bytes)
         except ParseException as e:
-            raise KMLParseError(f"Invalid XML syntax: {e}") from e
+            # If standard parsing fails, try preprocessing for Google Earth compatibility
+            try:
+                if isinstance(kml_content, bytes):
+                    kml_content = kml_content.decode("utf-8")
+
+                preprocessed_content = self._preprocess_google_earth_entities(kml_content)
+                content_bytes = preprocessed_content.encode("utf-8")
+                root = etree.fromstring(content_bytes)
+
+                logger.info("Successfully parsed KML after preprocessing Google Earth entities")
+            except ParseException:
+                # If preprocessing also fails, raise the original error
+                raise KMLParseError(f"Invalid XML syntax: {e}") from e
 
         # If parsing succeeded, continue extracting data. Wrap extraction in a
         # broad catch so we can present consistent KMLParseError for any
@@ -968,3 +983,34 @@ class XMLKMLParser:
     def _is_zip_content(content: bytes) -> bool:
         """Check if content appears to be a ZIP file."""
         return content.startswith(b"PK")
+
+    @staticmethod
+    def _preprocess_google_earth_entities(kml_content: str) -> str:
+        """
+        Preprocess KML content to escape common unescaped XML entities.
+
+        Google Earth sometimes produces KML files with unescaped entities in
+        metadata URLs and text content. This method handles the most common cases.
+
+        Args:
+            kml_content: Raw KML content string
+
+        Returns:
+            KML content with entities properly escaped
+        """
+        # Common Google Earth entity escaping patterns
+        # Handle & that are not already part of an entity
+        kml_content = kml_content.replace("&", "&amp;")
+
+        # Fix double-escaping of already escaped entities
+        kml_content = kml_content.replace("&amp;amp;", "&amp;")
+        kml_content = kml_content.replace("&amp;lt;", "&lt;")
+        kml_content = kml_content.replace("&amp;gt;", "&gt;")
+        kml_content = kml_content.replace("&amp;quot;", "&quot;")
+        kml_content = kml_content.replace("&amp;apos;", "&apos;")
+
+        # Handle < and > in text content (but not in XML tags)
+        # This is a simplified approach - more sophisticated parsing could be added
+        # if needed for specific Google Earth metadata patterns
+
+        return kml_content

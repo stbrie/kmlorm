@@ -193,33 +193,21 @@ class TestPointExtra:
         coord1 = Coordinate(longitude=-76.5, latitude=39.3)
         result1 = coord1.to_dict()
 
-        expected1 = {
-            "longitude": -76.5,
-            "latitude": 39.3,
-            "altitude": 0
-        }
+        expected1 = {"longitude": -76.5, "latitude": 39.3, "altitude": 0}
         assert result1 == expected1
 
         # Test with custom altitude
         coord2 = Coordinate(longitude=180.0, latitude=-90.0, altitude=1500.75)
         result2 = coord2.to_dict()
 
-        expected2 = {
-            "longitude": 180.0,
-            "latitude": -90.0,
-            "altitude": 1500.75
-        }
+        expected2 = {"longitude": 180.0, "latitude": -90.0, "altitude": 1500.75}
         assert result2 == expected2
 
         # Test with negative altitude
         coord3 = Coordinate(longitude=0.0, latitude=0.0, altitude=-100.0)
         result3 = coord3.to_dict()
 
-        expected3 = {
-            "longitude": 0.0,
-            "latitude": 0.0,
-            "altitude": -100.0
-        }
+        expected3 = {"longitude": 0.0, "latitude": 0.0, "altitude": -100.0}
         assert result3 == expected3
 
     def test_point_to_dict_method(self) -> None:
@@ -241,17 +229,13 @@ class TestPointExtra:
             coordinates=coord,
             extrude=True,
             altitude_mode="absolute",
-            tessellate=True
+            tessellate=True,
         )
 
         result = point.to_dict()
 
         # Verify coordinate data is nested correctly
-        assert result["coordinates"] == {
-            "longitude": -76.5,
-            "latitude": 39.3,
-            "altitude": 100.0
-        }
+        assert result["coordinates"] == {"longitude": -76.5, "latitude": 39.3, "altitude": 100.0}
 
         # Verify individual coordinate properties
         assert result["longitude"] == -76.5
