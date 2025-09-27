@@ -163,11 +163,13 @@ The built HTML documentation will be available in `docs/build/html/index.html`.
 
 ## Namespaces & Google Earth gx extensions
 
-The project parses KML 2.2 data and commonly-seen Google Earth extensions (the `gx` namespace) as well as Atom metadata. The fixtures under `kmlorm/tests/fixtures` demonstrate these namespaces. Use these namespace URIs when querying or generating KML:
+The project parses KML 2.2 data and commonly-seen Google Earth attributes. Use these namespace URIs when querying or generating KML:
 
 - kml (default): `http://www.opengis.net/kml/2.2`
 - gx: `http://www.google.com/kml/ext/2.2`
 - atom: `http://www.w3.org/2005/Atom`
+
+Note: the `gx` extensions (the `gx` namespace) as well as Atom metadata are not currently supported by kmlorm in particular, though lxml can parse them.
 
 Note: The `gx` namespace URI is a stable identifier used by Google but is not necessarily a browsable documentation page. For human-readable documentation about the `gx` extension elements see:
 
@@ -176,14 +178,21 @@ https://developers.google.com/kml/documentation/kmlreference#kmlextensions
 Example (ElementTree / lxml namespace mapping):
 
 ```python
+from lxml import etree
+
+# Load and parse the KML file
+tree = etree.parse("kmlorm/tests/fixtures/google_earth_kml.kml")
+root = tree.getroot()
+
+# Define namespace mapping
 ns = {
-    'kml': 'http://www.opengis.net/kml/2.2',
-    'gx':  'http://www.google.com/kml/ext/2.2',
-    'atom':'http://www.w3.org/2005/Atom',
+    "kml": "http://www.opengis.net/kml/2.2",
+    "gx": "http://www.google.com/kml/ext/2.2",
+    "atom": "http://www.w3.org/2005/Atom",
 }
 
-# find all gx:altitudeMode elements
-for e in root.findall('.//gx:altitudeMode', namespaces=ns):
+# Find all gx:altitudeMode elements
+for e in root.findall(".//gx:altitudeMode", namespaces=ns):
     print(e.text)
 ```
 
@@ -203,9 +212,9 @@ pytest -q
 This project implements a working set of KML parsing and model objects but some advanced features are intentionally partial or planned:
 
 - Implemented: basic models (Placemark, Folder, Point, Path, Polygon, MultiGeometry), core parsing, and a QuerySet/Manager skeleton.
-- Partial / planned: full `gx` feature support (e.g. `gx:Track`, `gx:Tour`), some advanced QuerySet geospatial operators, and certain export targets. See `docs/GOOGLE_KML_EXTENSIONS.md` and `docs/KML_ORM_SPECIFICATION.md` for details and roadmap.
+- Planned: full `gx` feature support (e.g. `gx:Track`, `gx:Tour`), some advanced QuerySet geospatial operators, and certain export targets. See `docs/GOOGLE_KML_EXTENSIONS.md` and `docs/KML_ORM_SPECIFICATION.md` for details and roadmap.
 
-If you depend on `lxml`-specific behaviour, install it in your environment; otherwise the internal XML parser provides a robust fallback for many use-cases.
+This project depends on `lxml`.  You'll need to install it in your environment if you want to use `kmlorm`.
 
 ## License
 
