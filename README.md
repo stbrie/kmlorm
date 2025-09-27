@@ -231,5 +231,5 @@ MIT License. See LICENSE file for details.
 ## Credits
  
 - Developed by Jack Nerad with assistance from Claude (Anthropic) and ChatGPT GPT-4.1 (OpenAI) AI Assistants
-- Built with a custom XML parser that supports both `lxml` and Python's built-in XML parsing
+- Built with a custom XML parser that uses `lxml`.  All credit really belongs to the `lxml` folks.  `kmlorm` is just a django'ish face on their superb work.
 - Inspired by Django's ORM design patterns
