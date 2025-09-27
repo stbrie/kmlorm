@@ -15,3 +15,4 @@ kmlorm.egg-info/SOURCES.txt
 
 kmlorm.egg-info/top_level.txt
 .pypirc
+Makefile
