@@ -5,7 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kmlorm"
 authors = [
-    {name = "Jack Nerad", email = "kmlorm.project@gmail.com"},
+    {name = "Jack Nerad", email = "kmlorm.project@gmail.com"}
+]
+contributors = [
     {name = "Claude (AI Assistant)"},
     {name = "ChatGPT GPT-4.1 (AI Assistant)"}
 ]
@@ -32,11 +34,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-django = ["django>=3.2"]
-postgis = ["sqlalchemy>=1.4", "psycopg2-binary"]
-pandas = ["pandas>=1.0"]
-geopandas = ["geopandas>=0.9"]
-spatial = ["shapely>=1.7", "rtree>=0.9"]
+
 dev = [
     "pytest>=6.0",
     "pytest-cov",
@@ -52,7 +50,7 @@ docs = [
     "sphinx-autodoc-typehints",
 ]
 all = [
-    "kmlorm[dev,docs,django,postgis,pandas,geopandas,spatial]"
+    "kmlorm[dev,docs]"
 ]
 
 [project.urls]
