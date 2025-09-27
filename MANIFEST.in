@@ -1,0 +1,9 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include kmlorm/py.typed
+recursive-include kmlorm/tests/fixtures *.kml
+recursive-include docs *.md
+recursive-include docs *.rst
+recursive-include docs/source *.md
+recursive-include docs/source *.rst
