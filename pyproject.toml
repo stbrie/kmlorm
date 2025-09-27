@@ -6,15 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "kmlorm"
 authors = [
     {name = "Jack Nerad", email = "kmlorm.project@gmail.com"},
-    {name = "Claude (AI Assistant)", email = "claude@anthropic.com"},
-    {name = "ChatGPT GPT-4.1 (AI Assistant)", email = "gpt4@openai.com"}
+    {name = "Claude (AI Assistant)"},
+    {name = "ChatGPT GPT-4.1 (AI Assistant)"}
 ]
 description = "A Django-style ORM for KML (Keyhole Markup Language) files"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.11"
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
