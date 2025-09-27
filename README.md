@@ -60,7 +60,7 @@ pip install kmlorm[all]
 ## Requirements
 
 - Python 3.11+
-- lxml (recommended) or the Python stdlib `xml.etree.ElementTree` for basic parsing
+- lxml
 
 Note: This repository includes a built-in XML parser at `kmlorm/parsers/xml_parser.py` that will use `lxml` when available and fall back to the stdlib parser. If your environment or CI expects `lxml`-specific behaviour, install the `lxml` package.
 

@@ -72,7 +72,7 @@ Requirements
 ------------
 
 * Python 3.11+
-* lxml (recommended) or the Python stdlib ``xml.etree.ElementTree`` for basic parsing
+* lxml
 
 Indices and tables
 ==================
