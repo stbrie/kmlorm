@@ -7,10 +7,6 @@ name = "kmlorm"
 authors = [
     {name = "Jack Nerad", email = "kmlorm.project@gmail.com"}
 ]
-contributors = [
-    {name = "Claude (AI Assistant)"},
-    {name = "ChatGPT GPT-4.1 (AI Assistant)"}
-]
 description = "A Django-style ORM for KML (Keyhole Markup Language) files"
 readme = "README.md"
 license = {text = "MIT"}
