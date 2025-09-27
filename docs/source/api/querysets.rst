@@ -1,10 +1,14 @@
 QuerySets and Managers
 ======================
 
-KML ORM provides Django-style QuerySets and Managers for filtering and querying KML elements.
+KML ORM provides Django-style QuerySets and Managers for filtering and querying KML elements. Managers serve as the interface between models and the database-like operations, providing access to QuerySets which handle the actual filtering, chaining, and data manipulation. When you call methods like ``.filter()`` or ``.all()`` on a manager, it returns a QuerySet that can be further refined with additional filters and operations. This two-tier system allows for intuitive, chainable queries while maintaining clean separation between data access (Managers) and data manipulation (QuerySets).
 
 QuerySet
 --------
+
+A QuerySet represents a collection of KML elements that can be filtered, ordered, and manipulated through a fluent interface. The term "QuerySet" originates from Django's ORM, where it describes a lazy, chainable container for database queries that doesn't execute until the data is actually needed. In KML ORM, QuerySets work similarly but operate on in-memory KML data rather than database records.
+
+QuerySets are lazy and chainable, meaning you can apply multiple filters, ordering operations, and transformations without immediately processing the data. The actual filtering and processing occurs when you iterate over the QuerySet, access specific elements, or call evaluation methods. This design allows for efficient composition of complex queries and provides an intuitive interface for data manipulation that feels natural to developers familiar with Django or similar ORMs.
 
 The :class:`~kmlorm.core.querysets.KMLQuerySet` class provides chainable query methods.
 
@@ -16,6 +20,10 @@ The :class:`~kmlorm.core.querysets.KMLQuerySet` class provides chainable query m
 
 Manager
 -------
+
+A Manager is the interface between KML models and QuerySets, serving as the primary access point for retrieving and manipulating collections of KML elements. The term "Manager" comes from Django's ORM, where it represents the layer responsible for managing database table operations and providing the entry point for queries. In Django, managers are accessed through the ``.objects`` attribute on models, establishing a clean separation between the model definition and query operations.
+
+In KML ORM, managers work similarly but are tailored for KML data structures. Each KML element type has its own specialized manager that provides type-safe access to QuerySets. Managers handle the initial data access and creation of QuerySets, while also providing convenience methods for common operations. They act as the bridge between the high-level model interface and the low-level query operations, ensuring that all data access follows consistent patterns and maintains proper type safety throughout the query chain.
 
 The :class:`~kmlorm.core.managers.KMLManager` class provides the interface for accessing QuerySets.
 

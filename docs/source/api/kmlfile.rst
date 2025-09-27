@@ -40,7 +40,18 @@ The KMLFile class provides several class methods for loading KML data from diffe
 Working with Managers
 ---------------------
 
-Once loaded, KMLFile provides Django-style managers for accessing different types of KML elements:
+Once loaded, KMLFile provides Django-style managers for accessing different types of KML elements. Each manager provides the full QuerySet API for filtering, querying, and manipulating elements.
+
+**Available Managers:**
+
+* :attr:`~kmlorm.parsers.kml_file.KMLFile.folders` - :class:`~kmlorm.core.managers.FolderManager` for accessing folders
+* :attr:`~kmlorm.parsers.kml_file.KMLFile.placemarks` - :class:`~kmlorm.core.managers.PlacemarkManager` for accessing placemarks
+* :attr:`~kmlorm.parsers.kml_file.KMLFile.paths` - :class:`~kmlorm.core.managers.PathManager` for accessing paths (LineStrings)
+* :attr:`~kmlorm.parsers.kml_file.KMLFile.polygons` - :class:`~kmlorm.core.managers.PolygonManager` for accessing polygons
+* :attr:`~kmlorm.parsers.kml_file.KMLFile.points` - :class:`~kmlorm.core.managers.PointManager` for accessing points
+* :attr:`~kmlorm.parsers.kml_file.KMLFile.multigeometries` - :class:`~kmlorm.core.managers.MultiGeometryManager` for accessing multi-geometries
+
+Each manager supports the full range of Django-style query methods including ``.filter()``, ``.get()``, ``.near()``, ``.within_bounds()``, and more. See :doc:`querysets` for complete documentation of available query methods.
 
 .. code-block:: python
 
