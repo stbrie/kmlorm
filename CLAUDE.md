@@ -31,7 +31,7 @@ kml_orm/
 │   ├── parsers/           # XML/KML parsing utilities
 │   ├── spatial/           # Geospatial operations and utilities
 │   ├── utils/             # General utilities
-│   ├── exports/           # Export functionality (GeoJSON, etc.)
+│   ├── exports/           # Reserved for future functionality
 │   └── tests/             # Test suite
 ├── docs/                  # Sphinx documentation
 ├── pyproject.toml         # Project configuration
@@ -70,12 +70,6 @@ KML ORM is a Django-style ORM for KML (Keyhole Markup Language) files that provi
 - **Geospatial operations**: `.near()`, `.within_bounds()`, coordinate filtering
 - **Field lookups**: `name__icontains`, `address__contains`, `visibility=True`
 - **Type safety**: Full type annotations throughout
-
-### Export System (kmlorm/exports/)
-- **GeoJSON**: Convert KML to GeoJSON format
-- **PostGIS**: Database export functionality (optional dependency)
-- **Pandas**: DataFrame integration (optional dependency)
-- **Multiple formats**: Extensible export system
 
 ## Development Workflow
 
@@ -206,14 +200,14 @@ root = etree.fromstring(kml_content, parser)
 **Pattern**: Handle optional dependencies gracefully:
 ```python
 try:
-    import pandas as pd
-    HAS_PANDAS = True
+    import optional_library
+    HAS_OPTIONAL = True
 except ImportError:
-    HAS_PANDAS = False
+    HAS_OPTIONAL = False
 
-def to_dataframe(self):
-    if not HAS_PANDAS:
-        raise ImportError("pandas is required for DataFrame export")
+def optional_feature(self):
+    if not HAS_OPTIONAL:
+        raise ImportError("optional_library is required for this feature")
     # Implementation here
 ```
 
@@ -282,7 +276,7 @@ When suggesting or reviewing code, ensure it meets these criteria:
 
 ### Dependencies
 - **Required**: `lxml` for XML parsing
-- **Optional**: `django`, `pandas`, `geopandas`, `shapely`, `psycopg2-binary`
+- **Optional**: None currently (reserved for future optional features)
 - **Development**: `pytest`, `mypy`, `pylint`, `black`, `flake8`, `isort`
 
 ### Version Management

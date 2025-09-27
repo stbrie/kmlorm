@@ -37,7 +37,7 @@ Features
 * **Type hints**: Full type annotation support for modern Python development
 * **No Django dependency**: Use Django patterns without the framework
 * **Geospatial operations**: Built-in spatial queries like ``.near()``, ``.within_bounds()``
-* **Multiple export formats**: Export to GeoJSON, PostGIS, pandas, and more
+* **Python data structures**: Access KML data as native Python objects
 
 Quick Example
 -------------

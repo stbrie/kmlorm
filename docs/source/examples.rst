@@ -189,71 +189,51 @@ Validate and clean geographic data:
    # Usage
    report = validate_geographic_data('locations.kml')
 
-Data Export and Conversion
---------------------------
+Data Access with to_dict() Methods
+------------------------------------
 
-Convert KML data to various formats:
+Convert KML objects to Python dictionaries for further processing:
 
 .. code-block:: python
 
-   import csv
+   # Load KML file
+   kml = KMLFile.from_file('stores.kml')
+
+   # Convert individual placemarks to dictionaries
+   for placemark in kml.placemarks.has_coordinates():
+       placemark_dict = placemark.to_dict()
+       print(f"Placemark: {placemark_dict['name']}")
+       print(f"Coordinates: {placemark_dict['coordinates']}")
+       print(f"Point data: {placemark_dict['point']}")
+
+   # Convert all placemarks to a list of dictionaries
+   all_placemarks = [p.to_dict() for p in kml.placemarks.all()]
+   print(f"Converted {len(all_placemarks)} placemarks to dictionaries")
+
+   # Access coordinate data
+   for placemark in kml.placemarks.has_coordinates():
+       point_dict = placemark.point.to_dict()
+       coord_dict = placemark.point.coordinates.to_dict()
+
+       print(f"Point: {point_dict}")
+       print(f"Coordinates: {coord_dict}")
+
+   # Use dictionaries with external libraries (user's choice)
+   # Example: JSON serialization
    import json
+   json_data = json.dumps(all_placemarks, indent=2)
 
-   def export_to_csv(kml_file_path, output_path):
-       """Export placemark data to CSV."""
-       kml = KMLFile.from_file(kml_file_path)
+   # Example: Create your own export function
+   def save_as_csv(placemarks, filename):
+       """User-defined function using to_dict() data."""
+       import csv
+       if not placemarks:
+           return
 
-       with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
-           fieldnames = ['name', 'description', 'longitude', 'latitude', 'altitude', 'address']
-           writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+       with open(filename, 'w', newline='') as f:
+           writer = csv.DictWriter(f, fieldnames=placemarks[0].keys())
            writer.writeheader()
-
-           for placemark in kml.placemarks.all():
-               row = {
-                   'name': placemark.name or '',
-                   'description': placemark.description or '',
-                   'longitude': placemark.longitude or '',
-                   'latitude': placemark.latitude or '',
-                   'altitude': placemark.altitude or '',
-                   'address': placemark.address or '',
-               }
-               writer.writerow(row)
-
-       print(f"Exported {kml.placemarks.count()} placemarks to {output_path}")
-
-   def export_to_geojson(kml_file_path, output_path):
-       """Export placemark data to GeoJSON."""
-       kml = KMLFile.from_file(kml_file_path)
-
-       features = []
-       for placemark in kml.placemarks.has_coordinates():
-           feature = {
-               "type": "Feature",
-               "geometry": {
-                   "type": "Point",
-                   "coordinates": [placemark.longitude, placemark.latitude]
-               },
-               "properties": {
-                   "name": placemark.name,
-                   "description": placemark.description,
-                   "address": placemark.address,
-               }
-           }
-           features.append(feature)
-
-       geojson = {
-           "type": "FeatureCollection",
-           "features": features
-       }
-
-       with open(output_path, 'w', encoding='utf-8') as f:
-           json.dump(geojson, f, indent=2)
-
-       print(f"Exported {len(features)} features to {output_path}")
-
-   # Usage
-   export_to_csv('stores.kml', 'stores.csv')
-   export_to_geojson('stores.kml', 'stores.geojson')
+           writer.writerows(placemarks)
 
 Spatial Analysis
 ----------------

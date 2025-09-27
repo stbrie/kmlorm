@@ -48,7 +48,7 @@ Validation
 
 .. automethod:: kmlorm.models.point.Coordinate.validate
 
-Data Export
+Data Access
 -----------
 
 .. automethod:: kmlorm.models.point.Coordinate.to_dict
@@ -133,7 +133,7 @@ Coordinates are automatically handled when working with Placemarks:
    if coord:
        print(f"Full coordinates: {coord.longitude}, {coord.latitude}, {coord.altitude}")
 
-Exporting Coordinate Data
+Accessing Coordinate Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
@@ -144,7 +144,7 @@ Exporting Coordinate Data
    # Create a coordinate
    coord = Coordinate(longitude=-76.5294, latitude=39.2904, altitude=100.5)
 
-   # Export to dictionary format
+   # Convert to dictionary format
    coord_dict = coord.to_dict()
    print(coord_dict)
    # Output: {'longitude': -76.5294, 'latitude': 39.2904, 'altitude': 100.5}
@@ -157,7 +157,7 @@ Exporting Coordinate Data
    # Use with placemarks for data transfer
    placemark = Placemark(name="Distribution Center", coordinates=(-76.5294, 39.2904, 100.5))
 
-   # Export placemark coordinate data
+   # Access placemark coordinate data
    if placemark.coordinates:
        coord_data = placemark.coordinates.to_dict()
        print(f"Coordinate data: {coord_data}")

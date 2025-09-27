@@ -49,6 +49,13 @@ class Folder(KMLElement):
     folders: RelatedManager  # Nested folders
     paths: RelatedManager
     polygons: RelatedManager
+    multigeometries: RelatedManager
+
+class Point(KMLElement):
+    """Geographic point with coordinates"""
+    coordinates: Coordinate  # Coordinate object (longitude, latitude, altitude)
+    extrude: bool
+    altitude_mode: str
 
 class Path(KMLElement):
     """LineString paths/routes"""
@@ -62,6 +69,39 @@ class Polygon(KMLElement):
     inner_boundaries: list  # [[(lon, lat, alt), ...], ...]
     extrude: bool
     altitude_mode: str
+
+class MultiGeometry(KMLElement):
+    """Collection of multiple geometry types"""
+    points: list[Point]
+    paths: list[Path]
+    polygons: list[Polygon]
+    # Supports mixed geometry collections
+
+class Coordinate:
+    """Individual coordinate with longitude, latitude, altitude"""
+    longitude: float
+    latitude: float
+    altitude: float = 0.0
+
+    @classmethod
+    def from_string(cls, coord_str: str) -> 'Coordinate'
+    @classmethod
+    def from_any(cls, value: Any) -> 'Coordinate'
+    def to_dict(self) -> dict
+
+class KMLFile:
+    """Main entry point for KML document parsing and access"""
+    name: str
+    description: str
+    placemarks: KMLManager
+    folders: KMLManager
+
+    @classmethod
+    def from_file(cls, path: str) -> 'KMLFile'
+    @classmethod
+    def from_string(cls, kml_data: str) -> 'KMLFile'
+    @classmethod
+    def from_url(cls, url: str) -> 'KMLFile'
 ```
 
 ## QuerySet Methods
@@ -285,7 +325,7 @@ placemarks_data = kml.placemarks.values(
 # - Use pandas for DataFrame conversion
 # - Use Shapely for geometry operations
 # - Use GeoPandas for spatial analysis
-# - Use PostGIS connectors for database export
+# - Use PostGIS connectors for spatial database operations
 ```
 
 ## Advanced Features
@@ -373,88 +413,88 @@ class KMLOrmSettings:
     DEFAULT_ENCODING = 'utf-8'
     NAMESPACE_HANDLING = 'strict'  # 'strict', 'lenient', 'ignore'
 
-    # Export
+    # Spatial/Coordinate system
     DEFAULT_SRID = 4326
-    GEOJSON_PRECISION = 6
 ```
 
 ## Package Structure
 
 ```
 kmlorm/
-├── __init__.py
+├── __init__.py              # Main package exports
+├── _version.py              # Version management (auto-generated)
 ├── core/
 │   ├── __init__.py
-│   ├── managers.py          # KMLManager, RelatedManager
-│   ├── querysets.py         # KMLQuerySet with all methods
-│   ├── fields.py            # CoordinateField, etc.
-│   └── exceptions.py        # All exception classes
+│   ├── managers.py          # KMLManager, RelatedManager implementations
+│   ├── querysets.py         # KMLQuerySet with filtering and geospatial methods
+│   └── exceptions.py        # All custom exception classes
 ├── models/
 │   ├── __init__.py
-│   ├── base.py             # KMLElement base class
-│   ├── placemark.py        # Placemark model
-│   ├── folder.py           # Folder model
-│   ├── path.py             # Path/LineString model
-│   └── polygon.py          # Polygon model
+│   ├── base.py              # KMLElement base class
+│   ├── placemark.py         # Placemark model with coordinates
+│   ├── folder.py            # Folder model for hierarchical organization
+│   ├── path.py              # Path/LineString geometry model
+│   ├── polygon.py           # Polygon geometry model
+│   ├── point.py             # Point model and Coordinate class
+│   └── multigeometry.py     # MultiGeometry collection model
 ├── parsers/
 │   ├── __init__.py
-│   ├── xml_parser.py       # Built-in XML parser (lxml/stdlib)
-│   └── validation.py       # KML validation
+│   ├── xml_parser.py        # XML/KML parsing with lxml
+│   └── kml_file.py          # KMLFile main entry point
 ├── spatial/
-│   ├── __init__.py
-│   ├── index.py            # Spatial indexing (R-tree, etc.)
-│   ├── operations.py       # Spatial operations
-│   └── utils.py            # Coordinate utilities
+│   └── __init__.py          # Reserved for spatial operations
 ├── exports/
-│   ├── __init__.py
-│   ├── django_export.py    # Django model export
-│   ├── postgis_export.py   # PostGIS export
-│   ├── geojson_export.py   # GeoJSON export
-│   └── pandas_export.py    # DataFrame export
+│   └── __init__.py          # Reserved for future functionality
 ├── utils/
-│   ├── __init__.py
-│   ├── caching.py          # QuerySet caching
-│   └── helpers.py          # Utility functions
+│   └── __init__.py          # Reserved for utility functions
 └── tests/
     ├── __init__.py
-    ├── test_models.py
-    ├── test_querysets.py
-    ├── test_spatial.py
-    ├── test_exports.py
+    ├── test_basic.py         # Core model functionality tests
+    ├── test_placemark.py     # Placemark-specific tests
+    ├── test_folder.py        # Folder model tests
+    ├── test_multigeometry.py # MultiGeometry tests
+    ├── test_path.py          # Path model tests
+    ├── test_polygon.py       # Polygon model tests
+    ├── test_point_extra.py   # Point and Coordinate tests
+    ├── test_base.py          # Base model tests
+    ├── test_kml_file.py      # KMLFile parser tests
+    ├── test_xml_parser.py    # XML parser tests
+    ├── test_queryset.py      # QuerySet functionality tests
+    ├── test_querysets_extra.py # Advanced QuerySet tests
+    ├── test_managers_extra.py  # Manager functionality tests
+    ├── test_url_integration.py # HTTP/URL loading tests
+    ├── test_*_docs.py        # Documentation example tests
+    ├── test_*_examples.py    # Usage pattern tests
     └── fixtures/
-        ├── sample.kml
-        ├── complex.kml
-        └── invalid.kml
+        ├── sample.kml        # Basic test KML
+        ├── comprehensive.kml # Full-featured test KML
+        ├── tutorial_stores.kml # Tutorial examples
+        ├── multigeometry_test.kml # MultiGeometry samples
+        └── google_earth_kml.kml # Real-world KML samples
 ```
 
 ## Dependencies
 
 ### Required
-- `lxml` - XML parsing (with stdlib fallback)
-- `typing-extensions` - Type hints for older Python
+- `lxml` - XML parsing and KML document processing
 
 ### Optional
-- `django` - For Django model export
-- `sqlalchemy` - For database export
-- `psycopg2` or `psycopg3` - For PostGIS export
-- `pandas` - For DataFrame export
-- `geopandas` - For GeoDataFrame export
-- `shapely` - For advanced spatial operations
-- `rtree` - For spatial indexing performance
+- None currently (reserved for future features that may require optional dependencies)
+- Note: Users can integrate with `pandas`, `shapely`, `geopandas`, etc. using the `to_dict()` methods
 
 ## Compatibility
 
-- **Python**: 3.8+
-- **KML**: Google Earth KML/KMZ, OGC KML 2.2
-- **Coordinate Systems**: WGS84 (EPSG:4326) primary, others via transformation
-- **File Formats**: .kml, .kmz (zipped KML)
+- **Python**: 3.11+ (as specified in pyproject.toml)
+- **KML**: Google Earth KML, OGC KML 2.2 standard
+- **Coordinate Systems**: WGS84 (EPSG:4326) - longitude, latitude, altitude order
+- **File Formats**: .kml files and HTTP/HTTPS URLs
 
 ## Future Enhancements
 
 1. **Async Support**: Async querysets for large files
 2. **Streaming**: Process large KML files without loading entirely into memory
 3. **Schema Evolution**: Handle KML schema changes gracefully
-4. **Plugin System**: Custom parsers and exporters
+4. **Plugin System**: Custom parsers and data processors
 5. **CLI Tools**: Command-line utilities for KML processing
 6. **REST API**: Optional web API for KML data
 7. **Visualization**: Integration with mapping libraries (Folium, Plotly, etc.)
@@ -480,5 +520,32 @@ kmlorm/
 - Process travel routes and waypoints
 - Organize personal location collections
 - Convert between geospatial formats
+
+## Current Implementation Status
+
+This specification reflects the current state of the kmlorm library as implemented. The following features are **fully implemented and tested**:
+
+### ✅ Implemented Features
+- **Core Models**: All KML element types (Placemark, Folder, Point, Path, Polygon, MultiGeometry)
+- **Django-style API**: QuerySet methods (`.all()`, `.filter()`, `.get()`, etc.)
+- **Geospatial Queries**: `.has_coordinates()`, `.valid_coordinates()`, `.near()`, `.within_bounds()`
+- **Field Lookups**: `name__icontains`, `address__contains`, etc.
+- **KML Parsing**: Full lxml-based XML/KML parsing with namespace support
+- **URL Integration**: Load KML from HTTP/HTTPS URLs
+- **Data Access**: `to_dict()` methods for all models for external library integration
+- **Hierarchical Structure**: Nested folders with `flatten=True` support
+- **Type Safety**: Full type annotations throughout
+- **Comprehensive Testing**: 22 test files with documentation validation
+
+### 🚧 Reserved for Future
+- **spatial/**: Directory exists but no spatial indexing implemented
+- **utils/**: Directory exists but no utility functions implemented
+- **exports/**: Directory exists but no built-in export formats
+
+### 📋 Testing Strategy
+- **Documentation Tests**: All examples in docs are automatically tested
+- **Integration Tests**: Real-world KML files and URL loading
+- **Coverage**: Extensive test coverage across all implemented functionality
+- **Type Checking**: Full mypy validation
 
 This specification provides a comprehensive Django-style ORM interface for KML data, filling a significant gap in the Python geospatial ecosystem while remaining framework-agnostic and highly reusable.

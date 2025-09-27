@@ -23,6 +23,7 @@ import pytest
 from kmlorm.models.placemark import Placemark
 from kmlorm.models.point import Point
 from kmlorm.core.exceptions import KMLValidationError
+from kmlorm import KMLFile
 
 
 class TestPlacemark:
@@ -165,3 +166,206 @@ class TestPlacemark:
         p2 = Placemark(point=Point(coordinates=(10.0, 20.0)), extended_data=invalid_data)
         with pytest.raises(KMLValidationError):
             p2.validate()
+
+    def test_has_coordinates_with_flatten_mixed_scenario(self) -> None:
+        """
+        Test that has_coordinates() with flatten=True correctly filters placemarks
+        that have coordinates from those that don't in a mixed scenario.
+
+        This test verifies:
+        - KML file with placemarks that have coordinates and placemarks that don't
+        - flatten=True retrieves all placemarks regardless of folder structure
+        - has_coordinates() filters to only return placemarks with coordinates
+        """
+        kml_data = """<?xml version="1.0" encoding="UTF-8"?>
+        <kml xmlns="http://www.opengis.net/kml/2.2">
+            <Document>
+                <name>Mixed Coordinates Test</name>
+                <Placemark>
+                    <name>With Coordinates 1</name>
+                    <Point>
+                        <coordinates>-122.0856545755255,37.42243077405461,0</coordinates>
+                    </Point>
+                </Placemark>
+                <Placemark>
+                    <name>Without Coordinates 1</name>
+                    <description>This placemark has no coordinates</description>
+                </Placemark>
+                <Folder>
+                    <name>Test Folder</name>
+                    <Placemark>
+                        <name>With Coordinates 2</name>
+                        <Point>
+                            <coordinates>-122.084075,37.4220033612141,0</coordinates>
+                        </Point>
+                    </Placemark>
+                    <Placemark>
+                        <name>Without Coordinates 2</name>
+                        <description>Another placemark without coordinates</description>
+                    </Placemark>
+                </Folder>
+                <Placemark>
+                    <name>With Coordinates 3</name>
+                    <Point>
+                        <coordinates>-122.085075,37.4230033612141,0</coordinates>
+                    </Point>
+                </Placemark>
+            </Document>
+        </kml>"""
+
+        kml_file = KMLFile.from_string(kml_data)
+
+        # Get all placemarks with flatten=True
+        all_placemarks = kml_file.placemarks.all(flatten=True)
+        # Should get all 5 placemarks regardless of folder structure
+        assert len(all_placemarks) == 5
+
+        # Get only placemarks with coordinates using has_coordinates()
+        placemarks_with_coords = kml_file.placemarks.all(flatten=True).has_coordinates()
+
+        # Should only get the 3 placemarks that have coordinates
+        assert len(placemarks_with_coords) == 3
+
+        # Verify the names of placemarks with coordinates
+        names_with_coords = {p.name for p in placemarks_with_coords}
+        expected_names = {"With Coordinates 1", "With Coordinates 2", "With Coordinates 3"}
+        assert names_with_coords == expected_names
+
+        # Verify all returned placemarks actually have coordinates
+        for placemark in placemarks_with_coords:
+            assert placemark.has_coordinates is True
+            assert placemark.coordinates is not None
+            assert placemark.longitude is not None
+            assert placemark.latitude is not None
+
+    def test_has_coordinates_with_nested_folder_structure(self) -> None:
+        """
+        Test has_coordinates() with flatten=True in deeply nested folder structures.
+
+        This test verifies:
+        - Nested folders with mixed coordinate scenarios
+        - flatten=True correctly traverses all folder levels
+        - has_coordinates() filtering works across nested structures
+        """
+        kml_data = """<?xml version="1.0" encoding="UTF-8"?>
+        <kml xmlns="http://www.opengis.net/kml/2.2">
+            <Document>
+                <name>Nested Structure Test</name>
+                <Folder>
+                    <name>Level 1 Folder</name>
+                    <Placemark>
+                        <name>L1 With Coords</name>
+                        <Point>
+                            <coordinates>-122.0856545755255,37.42243077405461,0</coordinates>
+                        </Point>
+                    </Placemark>
+                    <Placemark>
+                        <name>L1 Without Coords</name>
+                        <description>No coordinates here</description>
+                    </Placemark>
+                    <Folder>
+                        <name>Level 2 Folder</name>
+                        <Placemark>
+                            <name>L2 With Coords</name>
+                            <Point>
+                                <coordinates>-122.084075,37.4220033612141,0</coordinates>
+                            </Point>
+                        </Placemark>
+                        <Folder>
+                            <name>Level 3 Folder</name>
+                            <Placemark>
+                                <name>L3 Without Coords</name>
+                                <description>Deep nesting, no coordinates</description>
+                            </Placemark>
+                            <Placemark>
+                                <name>L3 With Coords</name>
+                                <Point>
+                                    <coordinates>-122.085075,37.4230033612141,0</coordinates>
+                                </Point>
+                            </Placemark>
+                        </Folder>
+                    </Folder>
+                </Folder>
+                <Placemark>
+                    <name>Root With Coords</name>
+                    <Point>
+                        <coordinates>-122.086075,37.4240033612141,0</coordinates>
+                    </Point>
+                </Placemark>
+            </Document>
+        </kml>"""
+
+        kml_file = KMLFile.from_string(kml_data)
+
+        # Test that flatten=True gets all placemarks regardless of nesting
+        all_placemarks = kml_file.placemarks.all(flatten=True)
+        assert len(all_placemarks) == 6  # All placemarks across all folder levels
+
+        # Test has_coordinates() filtering
+        placemarks_with_coords = kml_file.placemarks.all(flatten=True).has_coordinates()
+        assert len(placemarks_with_coords) == 4  # Only those with coordinates
+
+        # Verify the correct placemarks are returned
+        names_with_coords = {p.name for p in placemarks_with_coords}
+        expected_names = {"L1 With Coords", "L2 With Coords", "L3 With Coords", "Root With Coords"}
+        assert names_with_coords == expected_names
+
+        # Verify all have valid coordinates
+        for placemark in placemarks_with_coords:
+            assert placemark.has_coordinates is True
+            assert placemark.point is not None
+            assert placemark.point.coordinates is not None
+
+    def test_has_coordinates_with_flatten_false_vs_true(self) -> None:
+        """
+        Test the difference between has_coordinates() with flatten=False vs flatten=True.
+
+        This test verifies:
+        - flatten=False only gets placemarks at the root level
+        - flatten=True gets placemarks from all folder levels
+        - has_coordinates() works correctly in both scenarios
+        """
+        kml_data = """<?xml version="1.0" encoding="UTF-8"?>
+        <kml xmlns="http://www.opengis.net/kml/2.2">
+            <Document>
+                <name>Flatten Comparison Test</name>
+                <Placemark>
+                    <name>Root With Coords</name>
+                    <Point>
+                        <coordinates>-122.0856545755255,37.42243077405461,0</coordinates>
+                    </Point>
+                </Placemark>
+                <Placemark>
+                    <name>Root Without Coords</name>
+                    <description>Root level, no coordinates</description>
+                </Placemark>
+                <Folder>
+                    <name>Test Folder</name>
+                    <Placemark>
+                        <name>Folder With Coords</name>
+                        <Point>
+                            <coordinates>-122.084075,37.4220033612141,0</coordinates>
+                        </Point>
+                    </Placemark>
+                    <Placemark>
+                        <name>Folder Without Coords</name>
+                        <description>In folder, no coordinates</description>
+                    </Placemark>
+                </Folder>
+            </Document>
+        </kml>"""
+
+        kml_file = KMLFile.from_string(kml_data)
+
+        # Test without flatten (default flatten=False)
+        root_placemarks_with_coords = kml_file.placemarks.has_coordinates()
+        assert len(root_placemarks_with_coords) == 1  # Only root level with coordinates
+        assert root_placemarks_with_coords[0].name == "Root With Coords"
+
+        # Test with flatten=True
+        all_placemarks_with_coords = kml_file.placemarks.all(flatten=True).has_coordinates()
+        assert len(all_placemarks_with_coords) == 2  # Both root and folder level with coordinates
+
+        names_with_coords = {p.name for p in all_placemarks_with_coords}
+        expected_names = {"Root With Coords", "Folder With Coords"}
+        assert names_with_coords == expected_names

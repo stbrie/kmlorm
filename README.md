@@ -9,7 +9,7 @@ A Django-style ORM for KML (Keyhole Markup Language) files that provides intuiti
 - **Type hints**: Full type annotation support for modern Python development
 - **No Django dependency**: Use Django patterns without the framework
 - **Geospatial operations**: Built-in spatial queries like `.near()`, `.within_bounds()`
-- **Multiple export formats**: Export to GeoJSON, PostGIS, pandas, and more
+- **Python data structures**: Access KML data as native Python objects
 
 ## Quick Start
 
@@ -44,17 +44,8 @@ pip install kmlorm
 For additional functionality:
 
 ```bash
-# Django integration
-pip install kmlorm[django]
-
-# PostGIS export
-pip install kmlorm[postgis]
-
-# pandas/GeoPandas export
-pip install kmlorm[pandas,geopandas]
-
-# All optional dependencies
-pip install kmlorm[all]
+# Core installation (recommended)
+pip install kmlorm
 ```
 
 ## Requirements
@@ -212,7 +203,7 @@ pytest -q
 This project implements a working set of KML parsing and model objects but some advanced features are intentionally partial or planned:
 
 - Implemented: basic models (Placemark, Folder, Point, Path, Polygon, MultiGeometry), core parsing, and a QuerySet/Manager skeleton.
-- Planned: full `gx` feature support (e.g. `gx:Track`, `gx:Tour`), some advanced QuerySet geospatial operators, and certain export targets. See `docs/GOOGLE_KML_EXTENSIONS.md` and `docs/KML_ORM_SPECIFICATION.md` for details and roadmap.
+- Planned: full `gx` feature support (e.g. `gx:Track`, `gx:Tour`) and some advanced QuerySet geospatial operators. See `docs/GOOGLE_KML_EXTENSIONS.md` and `docs/KML_ORM_SPECIFICATION.md` for details and roadmap.
 
 This project depends on `lxml`.  You'll need to install it in your environment if you want to use `kmlorm`.
 
