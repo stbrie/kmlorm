@@ -4,6 +4,10 @@ Direct XML-based KML parser using lxml.
 This module provides robust KML parsing without external KML library
 dependencies, focusing on extracting data for Django-style access rather
 than geospatial calculations.
+
+Features include automatic preprocessing for Google Earth KML files that
+contain unescaped XML entities, ensuring compatibility with real-world
+KML exports while maintaining strict validation for well-formed files.
 """
 
 # pylint: disable= too-many-branches, import-outside-toplevel, too-many-lines
@@ -50,7 +54,23 @@ class XMLKMLParser:
     Direct XML parser for KML files using lxml or xml.AnyTree.
 
     Focuses on robust parsing and data extraction rather than geospatial
-    calculations.
+    calculations. Includes automatic preprocessing for Google Earth KML files
+    that contain unescaped XML entities in metadata URLs and text content.
+
+    Features:
+    - Robust KML/KMZ parsing with namespace support
+    - Automatic fallback preprocessing for Google Earth compatibility
+    - Comprehensive error handling with wrapped exceptions
+    - Support for all major KML geometry types
+    - Extraction of extended data and schema data
+
+    Google Earth Compatibility:
+        This parser automatically handles common Google Earth KML files that
+        contain unescaped XML entities (particularly & characters in URLs).
+        When standard XML parsing fails, the parser attempts preprocessing
+        to escape entities before re-parsing. This maintains compatibility
+        with Google Earth exports while preserving strict XML validation
+        for well-formed KML files.
     """
 
     # KML namespace constants
