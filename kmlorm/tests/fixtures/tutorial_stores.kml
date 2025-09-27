@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Advanced KML Test</name>
+    <description>Complex KML for tutorial testing</description>
+    <Folder>
+      <name>Supply Locations</name>
+      <Placemark>
+        <name>Capital Electric Supply</name>
+        <visibility>1</visibility>
+        <description>Main electrical supply store</description>
+        <Point>
+          <coordinates>-76.5,39.3,0</coordinates>
+        </Point>
+      </Placemark>
+      <Placemark>
+        <name>Electric Depot</name>
+        <visibility>1</visibility>
+        <Point>
+          <coordinates>-76.6,39.4,0</coordinates>
+        </Point>
+      </Placemark>
+      <Folder>
+        <name>Warehouse</name>
+        <Placemark>
+          <name>Main Warehouse</name>
+          <Point>
+            <coordinates>-76.7,39.2,0</coordinates>
+          </Point>
+        </Placemark>
+      </Folder>
+    </Folder>
+    <Folder>
+      <name>Retail Locations</name>
+      <Placemark>
+        <name>Hardware Store</name>
+        <Point>
+          <coordinates>-76.8,39.1,0</coordinates>
+        </Point>
+      </Placemark>
+    </Folder>
+    <Placemark>
+      <name>Independent Store</name>
+      <Point>
+        <coordinates>-76.4,39.5,0</coordinates>
+      </Point>
+    </Placemark>
+  </Document>
+</kml>

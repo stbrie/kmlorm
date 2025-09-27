@@ -1,0 +1,11 @@
+[MASTER]
+# Allow C-extension packages (like lxml) to be treated as having members
+extension-pkg-allow-list=lxml,lxml.etree
+ignore=kmlorm/_version.py
+ignore-pattern=_version.py$
+
+[MESSAGES CONTROL]
+# Disable no-member errors for extension packages where we rely on stubs
+disable=
+    # C extension modules may not expose attributes at runtime
+    I1101

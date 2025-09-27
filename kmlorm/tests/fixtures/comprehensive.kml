@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Comprehensive KML Test File</name>
+    <description>A complete test file with various KML element types for testing the KML ORM</description>
+    <open>1</open>
+
+    <!-- Styles -->
+    <Style id="redIcon">
+      <IconStyle>
+        <color>ff0000ff</color>
+        <scale>1.2</scale>
+      </IconStyle>
+    </Style>
+
+    <Style id="blueLine">
+      <LineStyle>
+        <color>ffff0000</color>
+        <width>3</width>
+      </LineStyle>
+    </Style>
+
+    <Style id="greenPoly">
+      <PolyStyle>
+        <color>7f00ff00</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+
+    <!-- Schema for extended data -->
+    <Schema name="StoreInfo" id="storeSchema">
+      <SimpleField type="string" name="manager">
+        <displayName>Store Manager</displayName>
+      </SimpleField>
+      <SimpleField type="string" name="hours">
+        <displayName>Operating Hours</displayName>
+      </SimpleField>
+      <SimpleField type="int" name="employees">
+        <displayName>Number of Employees</displayName>
+      </SimpleField>
+    </Schema>
+
+    <!-- Point Placemarks -->
+    <Folder>
+      <name>Store Locations</name>
+      <description>Retail store locations</description>
+      <visibility>1</visibility>
+
+      <Placemark>
+        <name>Downtown Store</name>
+        <description><![CDATA[
+          <b>Main Store Location</b><br/>
+          Our flagship location in downtown Baltimore.
+        ]]></description>
+        <styleUrl>#redIcon</styleUrl>
+        <Point>
+          <coordinates>-76.6122,39.2904,10</coordinates>
+        </Point>
+        <ExtendedData>
+          <SchemaData schemaUrl="#storeSchema">
+            <SimpleData name="manager">John Smith</SimpleData>
+            <SimpleData name="hours">9 AM - 8 PM</SimpleData>
+            <SimpleData name="employees">15</SimpleData>
+          </SchemaData>
+          <Data name="store_id">
+            <value>MAIN001</value>
+          </Data>
+          <Data name="phone">
+            <displayName>Phone Number</displayName>
+            <value>(410) 555-0123</value>
+          </Data>
+        </ExtendedData>
+        <address>123 Main Street, Baltimore, MD 21201</address>
+        <phoneNumber>(410) 555-0123</phoneNumber>
+        <TimeStamp>
+          <when>2023-01-15T10:30:00Z</when>
+        </TimeStamp>
+      </Placemark>
+
+      <Placemark>
+        <name>Suburban Branch</name>
+        <description>Branch location in the suburbs</description>
+        <styleUrl>#redIcon</styleUrl>
+        <Point>
+          <coordinates>-76.7,39.4,5</coordinates>
+        </Point>
+        <ExtendedData>
+          <SchemaData schemaUrl="#storeSchema">
+            <SimpleData name="manager">Jane Doe</SimpleData>
+            <SimpleData name="hours">8 AM - 6 PM</SimpleData>
+            <SimpleData name="employees">8</SimpleData>
+          </SchemaData>
+        </ExtendedData>
+        <address>456 Oak Avenue, Towson, MD 21204</address>
+        <phoneNumber>(410) 555-0124</phoneNumber>
+      </Placemark>
+    </Folder>
+
+    <!-- LineString (Path) -->
+    <Folder>
+      <name>Delivery Routes</name>
+      <description>Common delivery routes between locations</description>
+
+      <Placemark>
+        <name>Route 1: Downtown to Suburb</name>
+        <description>Primary delivery route from main store to suburban branch</description>
+        <styleUrl>#blueLine</styleUrl>
+        <LineString>
+          <tessellate>1</tessellate>
+          <altitudeMode>clampToGround</altitudeMode>
+          <coordinates>
+            -76.6122,39.2904,0
+            -76.6200,39.3100,0
+            -76.6400,39.3300,0
+            -76.6800,39.3800,0
+            -76.7000,39.4000,0
+          </coordinates>
+        </LineString>
+        <ExtendedData>
+          <Data name="distance_km">
+            <value>15.2</value>
+          </Data>
+          <Data name="time_minutes">
+            <value>25</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+
+      <Placemark>
+        <name>Alternate Route</name>
+        <description>Alternative route avoiding downtown traffic</description>
+        <LineString>
+          <tessellate>1</tessellate>
+          <coordinates>
+            -76.6122,39.2904,0 -76.6500,39.2950,0 -76.6900,39.3200,0 -76.7000,39.4000,0
+          </coordinates>
+        </LineString>
+      </Placemark>
+    </Folder>
+
+    <!-- Polygon (Area) -->
+    <Folder>
+      <name>Service Areas</name>
+      <description>Geographic service coverage areas</description>
+
+      <Placemark>
+        <name>Primary Service Area</name>
+        <description>Main service coverage zone</description>
+        <styleUrl>#greenPoly</styleUrl>
+        <Polygon>
+          <extrude>1</extrude>
+          <altitudeMode>relativeToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -76.8,39.1,0
+                -76.4,39.1,0
+                -76.4,39.5,0
+                -76.8,39.5,0
+                -76.8,39.1,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+          <innerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -76.65,39.25,0
+                -76.55,39.25,0
+                -76.55,39.35,0
+                -76.65,39.35,0
+                -76.65,39.25,0
+              </coordinates>
+            </LinearRing>
+          </innerBoundaryIs>
+        </Polygon>
+        <ExtendedData>
+          <Data name="area_sq_km">
+            <value>1250</value>
+          </Data>
+          <Data name="population">
+            <value>85000</value>
+          </Data>
+        </ExtendedData>
+        <TimeSpan>
+          <begin>2023-01-01T00:00:00Z</begin>
+          <end>2023-12-31T23:59:59Z</end>
+        </TimeSpan>
+      </Placemark>
+
+      <Placemark>
+        <name>Expansion Area</name>
+        <description>Future expansion service area</description>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -77.0,39.0,0
+                -76.8,39.0,0
+                -76.8,39.2,0
+                -77.0,39.2,0
+                -77.0,39.0,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+    </Folder>
+
+    <!-- Nested Folders -->
+    <Folder>
+      <name>Administrative</name>
+      <description>Administrative and support locations</description>
+
+      <Folder>
+        <name>Warehouses</name>
+        <description>Storage and distribution facilities</description>
+
+        <Placemark>
+          <name>Main Warehouse</name>
+          <description>Primary distribution center</description>
+          <Point>
+            <coordinates>-76.5,39.2,0</coordinates>
+          </Point>
+          <ExtendedData>
+            <Data name="facility_type">
+              <value>warehouse</value>
+            </Data>
+            <Data name="capacity_sqft">
+              <value>50000</value>
+            </Data>
+          </ExtendedData>
+        </Placemark>
+      </Folder>
+
+      <Folder>
+        <name>Offices</name>
+        <description>Corporate and administrative offices</description>
+
+        <Placemark>
+          <name>Corporate Headquarters</name>
+          <description>Main corporate office</description>
+          <Point>
+            <coordinates>-76.6,39.3,0</coordinates>
+          </Point>
+          <address>789 Business Drive, Baltimore, MD 21202</address>
+        </Placemark>
+      </Folder>
+    </Folder>
+
+    <!-- Ground Overlay -->
+    <GroundOverlay>
+      <name>Service Area Map</name>
+      <description>Coverage area visualization</description>
+      <Icon>
+        <href>https://example.com/service-map.png</href>
+      </Icon>
+      <LatLonBox>
+        <north>39.5</north>
+        <south>39.0</south>
+        <east>-76.0</east>
+        <west>-77.0</west>
+        <rotation>0</rotation>
+      </LatLonBox>
+    </GroundOverlay>
+
+    <!-- Network Link -->
+    <NetworkLink>
+      <name>Live Traffic Data</name>
+      <description>Real-time traffic information</description>
+      <Link>
+        <href>https://api.example.com/traffic.kml</href>
+        <refreshMode>onInterval</refreshMode>
+        <refreshInterval>300</refreshInterval>
+      </Link>
+    </NetworkLink>
+
+  </Document>
+</kml>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Capital Electric Supply Locations</name>
+    <description>Sample KML file with store locations for testing</description>
+
+    <Folder>
+      <name>Maryland Stores</name>
+      <description>Capital Electric Supply stores in Maryland</description>
+
+      <Placemark>
+        <name>Capital Electric Supply - Rosedale</name>
+        <description>Main store in Rosedale, MD</description>
+        <address>1234 Baltimore Avenue, Rosedale, MD 21237</address>
+        <phoneNumber>(410) 555-0123</phoneNumber>
+        <Point>
+          <coordinates>-76.5105,39.3220,0</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="store_id">
+            <value>MD001</value>
+          </Data>
+          <Data name="manager">
+            <value>John Smith</value>
+          </Data>
+          <Data name="hours">
+            <value>7:00 AM - 5:00 PM</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+
+      <Placemark>
+        <name>Capital Electric Supply - Timonium</name>
+        <description>Branch store in Timonium, MD</description>
+        <address>5678 York Road, Timonium, MD 21093</address>
+        <phoneNumber>(410) 555-0124</phoneNumber>
+        <Point>
+          <coordinates>-76.6378,39.4370,0</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="store_id">
+            <value>MD002</value>
+          </Data>
+          <Data name="manager">
+            <value>Jane Doe</value>
+          </Data>
+          <Data name="hours">
+            <value>8:00 AM - 4:00 PM</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+
+      <Placemark>
+        <name>Capital Electric Supply - Annapolis</name>
+        <description>Branch store in Annapolis, MD</description>
+        <address>9012 Forest Drive, Annapolis, MD 21403</address>
+        <phoneNumber>(410) 555-0125</phoneNumber>
+        <Point>
+          <coordinates>-76.4951,38.9784,0</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="store_id">
+            <value>MD003</value>
+          </Data>
+          <Data name="manager">
+            <value>Bob Johnson</value>
+          </Data>
+          <Data name="hours">
+            <value>7:30 AM - 4:30 PM</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+    </Folder>
+
+    <Folder>
+      <name>Virginia Stores</name>
+      <description>Capital Electric Supply stores in Virginia</description>
+
+      <Placemark>
+        <name>Capital Electric Supply - Alexandria</name>
+        <description>Branch store in Alexandria, VA</description>
+        <address>3456 Richmond Highway, Alexandria, VA 22303</address>
+        <phoneNumber>(703) 555-0126</phoneNumber>
+        <Point>
+          <coordinates>-77.0842,38.7648,0</coordinates>
+        </Point>
+        <ExtendedData>
+          <Data name="store_id">
+            <value>VA001</value>
+          </Data>
+          <Data name="manager">
+            <value>Sarah Wilson</value>
+          </Data>
+          <Data name="hours">
+            <value>7:00 AM - 5:00 PM</value>
+          </Data>
+        </ExtendedData>
+      </Placemark>
+    </Folder>
+
+    <Placemark>
+      <name>Warehouse Distribution Center</name>
+      <description>Main distribution warehouse</description>
+      <address>7890 Industrial Parkway, Baltimore, MD 21224</address>
+      <phoneNumber>(410) 555-0127</phoneNumber>
+      <Point>
+        <coordinates>-76.5294,39.2904,0</coordinates>
+      </Point>
+      <ExtendedData>
+        <Data name="facility_type">
+          <value>warehouse</value>
+        </Data>
+        <Data name="capacity">
+          <value>50000 sq ft</value>
+        </Data>
+      </ExtendedData>
+    </Placemark>
+  </Document>
+</kml>

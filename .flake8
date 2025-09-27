@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    build,
+    dist,
+    *.egg-info,
+    .mypy_cache,
+    .pytest_cache,
+    [_version.py](http://_vscodecontentref_/2)
+extend-ignore =
+    # Allow line breaks before binary operators (conflicts with black)
+    W503

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>MultiGeometry Test Document</name>
+    <description>Test file containing various MultiGeometry examples</description>
+
+    <!-- Standalone MultiGeometry with multiple Points -->
+    <MultiGeometry id="multipoint">
+      <Point>
+        <coordinates>-122.4194,37.7749,0</coordinates>
+      </Point>
+      <Point>
+        <coordinates>-122.4094,37.7849,0</coordinates>
+      </Point>
+      <Point>
+        <coordinates>-122.4294,37.7649,0</coordinates>
+      </Point>
+    </MultiGeometry>
+
+    <!-- Placemark containing MultiGeometry with mixed geometries -->
+    <Placemark id="mixed-multigeom">
+      <name>Mixed MultiGeometry Example</name>
+      <description>Contains Point, LineString, and Polygon</description>
+      <MultiGeometry>
+        <Point>
+          <coordinates>-74.0059,40.7128,0</coordinates>
+        </Point>
+        <LineString>
+          <coordinates>
+            -74.0059,40.7128,0
+            -74.0069,40.7138,0
+            -74.0079,40.7148,0
+          </coordinates>
+        </LineString>
+        <Polygon>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>
+                -74.0100,40.7100,0
+                -74.0200,40.7100,0
+                -74.0200,40.7200,0
+                -74.0100,40.7200,0
+                -74.0100,40.7100,0
+              </coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </MultiGeometry>
+    </Placemark>
+
+    <!-- Nested MultiGeometry example -->
+    <Placemark id="nested-multigeom">
+      <name>Nested MultiGeometry</name>
+      <description>MultiGeometry containing another MultiGeometry</description>
+      <MultiGeometry>
+        <Point>
+          <coordinates>-87.6298,41.8781,0</coordinates>
+        </Point>
+        <MultiGeometry>
+          <Point>
+            <coordinates>-87.6398,41.8881,0</coordinates>
+          </Point>
+          <Point>
+            <coordinates>-87.6198,41.8681,0</coordinates>
+          </Point>
+          <LineString>
+            <coordinates>
+              -87.6398,41.8881,0
+              -87.6198,41.8681,0
+            </coordinates>
+          </LineString>
+        </MultiGeometry>
+      </MultiGeometry>
+    </Placemark>
+
+    <!-- Simple Placemark for comparison -->
+    <Placemark id="simple-point">
+      <name>Simple Point</name>
+      <description>Regular point placemark</description>
+      <Point>
+        <coordinates>-71.0589,42.3601,0</coordinates>
+      </Point>
+    </Placemark>
+
+    <!-- Standalone MultiGeometry with only LineStrings -->
+    <MultiGeometry id="multilinestring">
+      <LineString>
+        <coordinates>
+          -118.2437,34.0522,0
+          -118.2537,34.0622,0
+          -118.2637,34.0722,0
+        </coordinates>
+      </LineString>
+      <LineString>
+        <coordinates>
+          -118.2337,34.0422,0
+          -118.2437,34.0522,0
+          -118.2537,34.0622,0
+        </coordinates>
+      </LineString>
+    </MultiGeometry>
+
+  </Document>
+</kml>

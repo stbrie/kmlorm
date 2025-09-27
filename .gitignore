@@ -1,0 +1,16 @@
+venv/
+docs/build/
+__pycache__/
+*.py[cod]
+.env
+.vscode/
+dist/
+build/
+.coverage
+kmlorm/_version.py
+kmlorm.egg-info/dependency_links.txt
+kmlorm.egg-info/PKG-INFO
+kmlorm.egg-info/requires.txt
+kmlorm.egg-info/SOURCES.txt
+
+kmlorm.egg-info/top_level.txt
