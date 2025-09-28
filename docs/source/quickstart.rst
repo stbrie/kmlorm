@@ -30,9 +30,7 @@ Requirements
 
    To retrieve placemarks only at the "root" level, use ``kml.placemarks.children()``.
 
-   This changed in version [Editor's note: add the published released version here].  Prior to this version,
-   to get the placemarks at the "root" level, the statement was ``kml.placemarks.all()``, and
-   to get all the placemarks in a file, the statement was ``kml.placemarks.all(flatten=True)``.
+   This changed in version 1.0.0.  Prior to this version, to get the placemarks at the "root" level, the statement was ``kml.placemarks.all()``, and to get all the placemarks in a file, the statement was ``kml.placemarks.all(flatten=True)``.
 
    * Document-level only: ``kml.placemarks.children()``
    * All placemarks (including those in folders): ``kml.placemarks.all()``
