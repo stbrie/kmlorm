@@ -5,7 +5,15 @@ All notable changes to the KML ORM project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] 2025-09-28
+## [1.1.1] - 2025-09-28
+
+### Documentation
+
+- **Query Method Behavior Reference** - Added documentation clarifying query method behavior
+  - Created detailed truth table showing that `filter()`, `exclude()`, `get()` etc. operate on direct children only by default
+  - Added clear examples demonstrating when to use `.all()` vs `.children()` vs direct query methods
+
+## [1.1.0] - 2025-09-28
 
 ### Fixed
 

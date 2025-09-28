@@ -10,6 +10,7 @@ chainable query interfaces for geospatial data without requiring Django as a dep
 
    quickstart
    tutorial
+   query_behavior
    examples
 
 .. toctree::

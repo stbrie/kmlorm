@@ -231,8 +231,8 @@ Combine multiple query methods for complex filtering:
 
 .. code-block:: python
 
-   # Complex query
-   result = (kml.placemarks
+   # Complex query - searches ALL placemarks including nested
+   result = (kml.placemarks.all()  # Use .all() to search nested folders!
        .filter(name__icontains='electric')
        .near(-76.6, 39.3, radius_km=50)
        .has_coordinates()
@@ -241,6 +241,11 @@ Combine multiple query methods for complex filtering:
 
    for placemark in result:
        print(f"- {placemark.name}")
+
+.. important::
+
+   Query methods like ``filter()``, ``exclude()``, ``get()`` operate on direct children only by default.
+   Use ``.all()`` first to search nested elements. See :doc:`query_behavior` for details.
 
 Complete Example
 ----------------

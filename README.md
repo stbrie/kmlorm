@@ -20,12 +20,12 @@ from kmlorm import KMLFile
 kml = KMLFile.from_file('places.kml')
 
 # Query placemarks
-all_places = kml.placemarks.all()
-capital_stores = kml.placemarks.filter(name__icontains='capital')
-nearby = kml.placemarks.near(-76.6, 39.3, radius_km=25)
+all_places = kml.placemarks.all()  # Gets ALL placemarks including nested
+capital_stores = kml.placemarks.all().filter(name__icontains='capital')  # Search ALL
+nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)  # Search ALL
 
-# Chain queries
-nearby_open = (kml.placemarks
+# Chain queries (note: .all() is called first to search nested elements)
+nearby_open = (kml.placemarks.all()
     .filter(name__icontains='electric')
     .near(-76.6, 39.3, radius_km=50)
     .filter(visibility=True)
@@ -46,13 +46,21 @@ root_placemarks = kml.placemarks.children()
 # Get ALL placemarks including nested ones
 all_placemarks = kml.placemarks.all()
 
+# Get only root-level placemarks (direct children)
+root_placemarks = kml.placemarks.children()
+# Note: .filter() without .all() only searches direct children:
+root_visible = kml.placemarks.filter(visibility=True)  # Same as .children().filter()
+
 # Same pattern works for folders
 root_folders = kml.folders.children()
 all_folders = kml.folders.all()
 
 # Chain with other methods
 visible_root_places = kml.placemarks.children().filter(visibility=True)
+all_visible_places = kml.placemarks.all().filter(visibility=True)
 ```
+
+> **Important:** Query methods like `filter()`, `exclude()`, `get()` operate on direct children only by default. Use `.all()` first to search nested elements. See [Query Method Behavior Reference](docs/source/query_behavior.rst) for complete details.
 
 ## Installation
 
@@ -161,6 +169,7 @@ The built HTML documentation will be available in `docs/build/html/index.html`.
 
 - **Quick Start Guide**: `docs/source/quickstart.rst`
 - **Full Tutorial**: `docs/source/tutorial.rst`
+- **Query Method Behavior**: `docs/source/query_behavior.rst` - Important reference on how query methods work
 - **API Reference**: `docs/source/api/`
 - **Examples**: `docs/source/examples.rst`
 
