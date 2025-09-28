@@ -16,16 +16,26 @@ Requirements
 ~~~~~~~~~~~~
 
 * Python 3.11+
-* lxml (recommended, automatically detected)
+* lxml
 
 .. note:: **Working with Folders**
 
    KML files often organize placemarks inside folders. By default,
-   ``kml.placemarks.all()`` only returns placemarks at the document level.
-   To include placemarks from all folders, use ``kml.placemarks.all(flatten=True)``.
+   ``kml.placemarks.all()`` returns all the placemarks in a document
+   even though they may be nested below the top level document.  Think of ``kml.placemarks.all()``
+   as roughly equivalent to Django's ``Placemark.objects.all()`` queryset.  In Django, the 
+   database is implied.  To make a true parallel, the Django statement would be written, 
+   ``database.Placemark.objects.all()``. (Don't.  That won't work in Django. We are just drawing
+   comparisons for understanding.)
 
-   * Document-level only: ``kml.placemarks.all()``
-   * All placemarks (including those in folders): ``kml.placemarks.all(flatten=True)``
+   To retrieve placemarks only at the "root" level, use ``kml.placemarks.children()``.
+
+   This changed in version [Editor's note: add the published released version here].  Prior to this version,
+   to get the placemarks at the "root" level, the statement was ``kml.placemarks.all()``, and
+   to get all the placemarks in a file, the statement was ``kml.placemarks.all(flatten=True)``.
+
+   * Document-level only: ``kml.placemarks.children()``
+   * All placemarks (including those in folders): ``kml.placemarks.all()``
 
 Basic Usage
 -----------
@@ -67,33 +77,26 @@ Once loaded, use Django-style managers to access different element types:
 .. code-block:: python
 
    # Get placemarks at document root level only
-   root_placemarks = kml.placemarks.all()
+   root_placemarks = kml.placemarks.children()
    print(f"Found {len(root_placemarks)} root-level placemarks")
 
    # Get ALL placemarks including those nested in folders
-   all_placemarks = kml.placemarks.all(flatten=True)
+   all_placemarks = kml.placemarks.all()
    print(f"Found {len(all_placemarks)} total placemarks")
 
-   # Access different element types
-   folders = kml.folders.all()
-   paths = kml.paths.all()
-   polygons = kml.polygons.all()
-   points = kml.points.all()
-   multigeometries = kml.multigeometries.all()
+   # Access different element types at the "root" level
+   folders = kml.folders.children()
+   paths = kml.paths.children()
+   polygons = kml.polygons.children()
+   points = kml.points.children()
+   multigeometries = kml.multigeometries.children()
 
-   # Or get ALL elements of each type using flatten=True
-   all_folders = kml.folders.all(flatten=True)
-   all_paths = kml.paths.all(flatten=True)
-   all_polygons = kml.polygons.all(flatten=True)
-   all_points = kml.points.all(flatten=True)
-   all_multigeometries = kml.multigeometries.all(flatten=True)
-
-**Understanding flatten=True:**
-
-- ``all()`` returns only elements that are **direct children of the Document**
-- ``all(flatten=True)`` returns all elements including those nested inside Folders
-- This applies to **all element types**: placemarks, folders, paths, polygons, points, and multigeometries
-- Most real-world KML files organize elements in nested folders, so ``flatten=True`` is often needed
+   # Or get ALL elements of each type using all()
+   all_folders = kml.folders.all()
+   all_paths = kml.paths.all()
+   all_polygons = kml.polygons.all()
+   all_points = kml.points.all()
+   all_multigeometries = kml.multigeometries.all()
 
 **KML Structure Example:**
 
@@ -102,15 +105,15 @@ Once loaded, use Django-style managers to access different element types:
    <kml>
      <Document>
        <Folder>
-         <Folder>...</Folder>           <!-- Nested folder: requires flatten=True -->
-         <Placemark>...</Placemark>     <!-- Nested placemark: requires flatten=True -->
-         <Path>...</Path>               <!-- Nested path: requires flatten=True -->
-         <MultiGeometry>...</MultiGeometry> <!-- Nested multigeometry: requires flatten=True -->
+         <Folder>...</Folder>           <!-- Nested folder: found by all() -->
+         <Placemark>...</Placemark>     <!-- Nested placemark: found by all() -->
+         <Path>...</Path>               <!-- Nested path: found by all() -->
+         <MultiGeometry>...</MultiGeometry> <!-- Nested multigeometry: found by all() -->
        </Folder>
-       <Folder>...</Folder>             <!-- Direct child folder: found by all() -->
-       <Placemark>...</Placemark>       <!-- Direct child placemark: found by all() -->
-       <Path>...</Path>                 <!-- Direct child path: found by all() -->
-       <MultiGeometry>...</MultiGeometry> <!-- Direct child multigeometry: found by all() -->
+       <Folder>...</Folder>             <!-- Direct child folder: found by children() -->
+       <Placemark>...</Placemark>       <!-- Direct child placemark: found by children() -->
+       <Path>...</Path>                 <!-- Direct child path: found by children() -->
+       <MultiGeometry>...</MultiGeometry> <!-- Direct child multigeometry: found by children() -->
      </Document>
    </kml>
 
@@ -125,34 +128,34 @@ Filter elements using Django-style query methods:
    capital_stores = kml.placemarks.filter(name__icontains='capital')
 
    # Filter ALL placemarks including those in folders
-   all_capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains='capital')
+   all_capital_stores = kml.placemarks.all().filter(name__icontains='capital')
 
    # Exclude items (root-level only)
    not_capital = kml.placemarks.exclude(name__icontains='capital')
 
    # Exclude ALL placemarks including those in folders
-   all_not_capital = kml.placemarks.all(flatten=True).exclude(name__icontains='capital')
+   all_not_capital = kml.placemarks.all().exclude(name__icontains='capital')
 
    # Get a single item (searches root-level only)
    store = kml.placemarks.get(name='Capital Electric - Rosedale')
 
    # Get from ALL placemarks including folders
-   store = kml.placemarks.all(flatten=True).get(name='Capital Electric - Rosedale')
+   store = kml.placemarks.all().get(name='Capital Electric - Rosedale')
 
    # Check if items exist (root-level only)
    has_stores = kml.placemarks.filter(name__icontains='store').exists()
 
    # Check ALL placemarks including folders
-   has_any_stores = kml.placemarks.all(flatten=True).filter(name__icontains='store').exists()
+   has_any_stores = kml.placemarks.all().filter(name__icontains='store').exists()
 
 .. note:: **Important: Searching All vs. Root-Level Elements**
 
    The query methods like ``filter()``, ``exclude()``, ``get()``, and ``exists()`` operate on the manager's current elements:
 
-   * ``kml.placemarks.filter()`` - Searches only root-level placemarks
-   * ``kml.placemarks.all(flatten=True).filter()`` - Searches ALL placemarks including nested ones
+   * ``kml.placemarks.children().filter()`` - Searches only root-level placemarks
+   * ``kml.placemarks.all().filter()`` - Searches ALL placemarks including nested ones
 
-   Since most real-world KML files organize elements in folders, you'll typically want to use ``all(flatten=True)`` before applying filters to search the entire document.
+   Since most real-world KML files organize elements in folders, you'll typically want to use ``all()`` before applying filters to search the entire document.
 
 Working with Coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~

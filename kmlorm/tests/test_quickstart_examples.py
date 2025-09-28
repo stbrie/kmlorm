@@ -84,7 +84,7 @@ class TestQuickstartExamples:
 
         for manager_name, xml_tag in element_types:
             xml_names = extract_names(xml_tag)
-            all_elements = getattr(kml, manager_name).all(flatten=True)
+            all_elements = getattr(kml, manager_name).all()
             orm_names = set(e.name for e in all_elements if getattr(e, "name", None))
             # Debug output for folder analysis can be added here if needed
             missing = xml_names - orm_names
@@ -109,7 +109,7 @@ class TestQuickstartExamples:
 
         # Now parse with ORM and get all placemarks (flattened)
         kml = KMLFile.from_file(comprehensive_kml_path)
-        all_placemarks = kml.placemarks.all(flatten=True)
+        all_placemarks = kml.placemarks.all()
         orm_names = set(p.name for p in all_placemarks if getattr(p, "name", None))
 
         # Assert every XML placemark name is present in ORM result
@@ -177,7 +177,7 @@ class TestQuickstartExamples:
         assert "Maryland Stores" in folder_names
 
         # Verify we have placemarks (use flatten=True to get from nested folders)
-        placemarks = kml.placemarks.all(flatten=True)
+        placemarks = kml.placemarks.all()
         assert len(placemarks) > 0
 
         # Verify at least one placemark has coordinates (real places should)
@@ -247,7 +247,7 @@ class TestQuickstartExamples:
         assert len(capital_stores) == 2
 
         # Filter ALL placemarks including those in folders
-        all_capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
+        all_capital_stores = kml.placemarks.all().filter(name__icontains="capital")
         assert len(all_capital_stores) == 2  # Same as root-level for our test data
 
         # Exclude items (root-level only)
@@ -256,7 +256,7 @@ class TestQuickstartExamples:
         assert not_capital[0].name == "Hardware Store"
 
         # Exclude ALL placemarks including those in folders
-        all_not_capital = kml.placemarks.all(flatten=True).exclude(name__icontains="capital")
+        all_not_capital = kml.placemarks.all().exclude(name__icontains="capital")
         assert len(all_not_capital) == 1
 
         # Get a single item (searches root-level only)
@@ -265,7 +265,7 @@ class TestQuickstartExamples:
         assert store.address == "123 Main St, Rosedale, MD"
 
         # Get from ALL placemarks including folders
-        store = kml.placemarks.all(flatten=True).get(name="Capital Electric - Rosedale")
+        store = kml.placemarks.all().get(name="Capital Electric - Rosedale")
         assert store.name == "Capital Electric - Rosedale"
 
         # Check if items exist (root-level only)
@@ -273,7 +273,7 @@ class TestQuickstartExamples:
         assert has_stores is True
 
         # Check ALL placemarks including folders
-        has_any_stores = kml.placemarks.all(flatten=True).filter(name__icontains="store").exists()
+        has_any_stores = kml.placemarks.all().filter(name__icontains="store").exists()
         assert has_any_stores is True
 
     def test_working_with_coordinates(self) -> None:
@@ -438,7 +438,7 @@ class TestQuickstartExamples:
 
         # Check if flatten=True parameter works for folders
         try:
-            all_folders_flat = kml.folders.all(flatten=True)
+            all_folders_flat = kml.folders.all()
             _ = [f.name for f in all_folders_flat]
             supports_flatten = True
         except TypeError:
@@ -492,34 +492,34 @@ class TestQuickstartExamples:
 
         # Test all element types support flatten parameter without error
         root_placemarks = kml.placemarks.all()
-        all_placemarks = kml.placemarks.all(flatten=True)
+        all_placemarks = kml.placemarks.all()
         assert len(all_placemarks) >= len(
             root_placemarks
         ), "flatten=True should return at least as many placemarks as root-only"
 
         root_folders = kml.folders.all()
-        all_folders = kml.folders.all(flatten=True)
+        all_folders = kml.folders.all()
         assert len(all_folders) >= len(
             root_folders
         ), "flatten=True should return at least as many folders as root-only"
 
         # Test paths - comprehensive.kml has LineString elements (which become Path objects)
         root_paths = kml.paths.all()
-        all_paths = kml.paths.all(flatten=True)
+        all_paths = kml.paths.all()
         assert len(all_paths) >= len(
             root_paths
         ), "flatten=True should return at least as many paths as root-only"
 
         # Test polygons - comprehensive.kml has Polygon elements
         root_polygons = kml.polygons.all()
-        all_polygons = kml.polygons.all(flatten=True)
+        all_polygons = kml.polygons.all()
         assert len(all_polygons) >= len(
             root_polygons
         ), "flatten=True should return at least as many polygons as root-only"
 
         # Test points
         root_points = kml.points.all()
-        all_points = kml.points.all(flatten=True)
+        all_points = kml.points.all()
         assert len(all_points) >= len(
             root_points
         ), "flatten=True should return at least as many points as root-only"
@@ -528,7 +528,7 @@ class TestQuickstartExamples:
         mg_kml = KMLFile.from_file(multigeometry_kml_path)
 
         root_multigeometries = mg_kml.multigeometries.all()
-        all_multigeometries = mg_kml.multigeometries.all(flatten=True)
+        all_multigeometries = mg_kml.multigeometries.all()
         assert len(all_multigeometries) >= len(
             root_multigeometries
         ), "flatten=True should return at least as many multigeometries as root-only"
@@ -549,7 +549,7 @@ class TestQuickstartExamples:
 
         # Test with root-level queries - should find fewer results
         root_level_stores = kml.placemarks.filter(name__icontains="capital")
-        all_stores = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
+        all_stores = kml.placemarks.all().filter(name__icontains="capital")
 
         # Verify the practical difference
         # Flattened should find more stores than root-only
@@ -563,7 +563,7 @@ class TestQuickstartExamples:
         # Test exists() behavior difference
         root_has_timonium = kml.placemarks.filter(name__icontains="timonium").exists()
         all_has_timonium = (
-            kml.placemarks.all(flatten=True).filter(name__icontains="timonium").exists()
+            kml.placemarks.all().filter(name__icontains="timonium").exists()
         )
 
         # The Timonium store should be nested in folders, not at root level
@@ -581,7 +581,7 @@ class TestQuickstartExamples:
         print(f"Found {len(root_placemarks)} root-level placemarks")
 
         # Get ALL placemarks including those nested in folders
-        all_placemarks = kml.placemarks.all(flatten=True)
+        all_placemarks = kml.placemarks.all()
         print(f"Found {len(all_placemarks)} total placemarks")
 
         # Access different element types
@@ -592,11 +592,11 @@ class TestQuickstartExamples:
         multigeometries = kml.multigeometries.all()
 
         # Or get ALL elements of each type using flatten=True
-        all_folders = kml.folders.all(flatten=True)
-        all_paths = kml.paths.all(flatten=True)
-        all_polygons = kml.polygons.all(flatten=True)
-        all_points = kml.points.all(flatten=True)
-        all_multigeometries = kml.multigeometries.all(flatten=True)
+        all_folders = kml.folders.all()
+        all_paths = kml.paths.all()
+        all_polygons = kml.polygons.all()
+        all_points = kml.points.all()
+        all_multigeometries = kml.multigeometries.all()
 
         # Verify the code worked
         assert len(root_placemarks) >= 0
@@ -622,25 +622,25 @@ class TestQuickstartExamples:
         capital_stores = kml.placemarks.filter(name__icontains="capital")
 
         # Filter ALL placemarks including those in folders
-        all_capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
+        all_capital_stores = kml.placemarks.all().filter(name__icontains="capital")
 
         # Exclude items (root-level only)
         not_capital = kml.placemarks.exclude(name__icontains="capital")
 
         # Exclude ALL placemarks including those in folders
-        all_not_capital = kml.placemarks.all(flatten=True).exclude(name__icontains="capital")
+        all_not_capital = kml.placemarks.all().exclude(name__icontains="capital")
 
         # Get a single item (searches root-level only)
         store = kml.placemarks.get(name="Capital Electric - Rosedale")
 
         # Get from ALL placemarks including folders
-        store = kml.placemarks.all(flatten=True).get(name="Capital Electric - Rosedale")
+        store = kml.placemarks.all().get(name="Capital Electric - Rosedale")
 
         # Check if items exist (root-level only)
         has_stores = kml.placemarks.filter(name__icontains="store").exists()
 
         # Check ALL placemarks including folders
-        has_any_stores = kml.placemarks.all(flatten=True).filter(name__icontains="store").exists()
+        has_any_stores = kml.placemarks.all().filter(name__icontains="store").exists()
 
         # Verify the code worked as expected
         assert len(capital_stores) >= 1

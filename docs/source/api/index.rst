@@ -64,12 +64,12 @@ Example Usage
    # Load KML file
    kml = KMLFile.from_file('places.kml')
 
-   # Query elements (include nested with flatten=True)
-   all_places = kml.placemarks.all(flatten=True)
-   nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+   # Query elements (include nested elements)
+   all_places = kml.placemarks.all()
+   nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
    # Chain complex queries
-   results = (kml.placemarks.all(flatten=True)
+   results = (kml.placemarks.all()
        .filter(name__icontains='store')
        .has_coordinates()
        .order_by('name')

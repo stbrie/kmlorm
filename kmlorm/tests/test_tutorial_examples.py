@@ -77,35 +77,35 @@ class TestTutorialExamples:
         kml = KMLFile.from_string(self.complex_kml)
 
         # Exact match (default)
-        exact = kml.placemarks.all(flatten=True).filter(name="Capital Electric Supply")
+        exact = kml.placemarks.all().filter(name="Capital Electric Supply")
         assert len(exact) == 1
 
         # Case-insensitive contains
-        contains = kml.placemarks.all(flatten=True).filter(name__icontains="electric")
+        contains = kml.placemarks.all().filter(name__icontains="electric")
         assert len(contains) == 2  # Capital Electric Supply and Electric Depot
 
         # Starts with / ends with
-        starts = kml.placemarks.all(flatten=True).filter(name__startswith="Capital")
+        starts = kml.placemarks.all().filter(name__startswith="Capital")
         assert len(starts) == 1
 
-        ends = kml.placemarks.all(flatten=True).filter(name__endswith="Store")
+        ends = kml.placemarks.all().filter(name__endswith="Store")
         assert len(ends) == 2  # Hardware Store and Independent Store
 
         # In a list of values
-        multiple = kml.placemarks.all(flatten=True).filter(
+        multiple = kml.placemarks.all().filter(
             name__in=["Hardware Store", "Electric Depot"]
         )
         assert len(multiple) == 2
 
         # Null checks
-        with_description = kml.placemarks.all(flatten=True).filter(description__isnull=False)
+        with_description = kml.placemarks.all().filter(description__isnull=False)
         assert len(with_description) >= 1
 
-        without_description = kml.placemarks.all(flatten=True).filter(description__isnull=True)
+        without_description = kml.placemarks.all().filter(description__isnull=True)
         assert len(without_description) >= 1
 
         # Regular expressions
-        regex_match = kml.placemarks.all(flatten=True).filter(name__regex=r"^Capital.*Electric.*$")
+        regex_match = kml.placemarks.all().filter(name__regex=r"^Capital.*Electric.*$")
         assert len(regex_match) == 1
 
     def test_complex_queries(self) -> None:
@@ -115,7 +115,7 @@ class TestTutorialExamples:
 
         # Multiple filters (AND logic)
         result = (
-            kml.placemarks.all(flatten=True)
+            kml.placemarks.all()
             .filter(name__icontains="electric")
             .filter(visibility=True)
             .exclude(description__isnull=True)
@@ -124,7 +124,7 @@ class TestTutorialExamples:
 
         # Geospatial + attribute filtering
         baltimore_electric_stores = (
-            kml.placemarks.all(flatten=True)
+            kml.placemarks.all()
             .filter(name__icontains="electric")
             .near(-76.6, 39.3, radius_km=25)
             .has_coordinates()
@@ -167,7 +167,7 @@ class TestTutorialExamples:
         kml = KMLFile.from_string(self.complex_kml)
 
         # All placemarks regardless of folder
-        all_stores = kml.placemarks.all(flatten=True).filter(name__icontains="store")
+        all_stores = kml.placemarks.all().filter(name__icontains="store")
         assert len(all_stores) >= 2
 
         # Get placemarks from specific folder
@@ -181,8 +181,8 @@ class TestTutorialExamples:
         kml = KMLFile.from_string(self.complex_kml)
 
         # Get two placemarks
-        store1 = kml.placemarks.all(flatten=True).get(name__contains="Capital")
-        store2 = kml.placemarks.all(flatten=True).get(name__contains="Depot")
+        store1 = kml.placemarks.all().get(name__contains="Capital")
+        store2 = kml.placemarks.all().get(name__contains="Depot")
 
         # Calculate distance
         if store1.coordinates and store2.coordinates:
@@ -196,8 +196,8 @@ class TestTutorialExamples:
         # From tutorial.rst: Bearing Calculations section
         kml = KMLFile.from_string(self.complex_kml)
 
-        store1 = kml.placemarks.all(flatten=True).get(name__contains="Capital")
-        store2 = kml.placemarks.all(flatten=True).get(name__contains="Depot")
+        store1 = kml.placemarks.all().get(name__contains="Capital")
+        store2 = kml.placemarks.all().get(name__contains="Depot")
 
         if store1.coordinates and store2.coordinates:
             bearing = store1.bearing_to(store2)
@@ -223,7 +223,7 @@ class TestTutorialExamples:
         kml = KMLFile.from_string(self.complex_kml)
 
         validation_results = []
-        for placemark in kml.placemarks.all(flatten=True):
+        for placemark in kml.placemarks.all():
             try:
                 is_valid = placemark.validate()
                 validation_results.append({"name": placemark.name, "valid": is_valid})
@@ -241,14 +241,14 @@ class TestTutorialExamples:
 
         # Good: Use specific filters early
         nearby_electric = (
-            kml.placemarks.all(flatten=True)
+            kml.placemarks.all()
             .filter(name__icontains="electric")  # Filter first
             .near(-76.6, 39.3, radius_km=10)  # Then apply geospatial
         )
         assert len(nearby_electric) >= 0
 
         # Less efficient: Geospatial first on large dataset
-        all_nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=50)
+        all_nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=50)
         electric_nearby = all_nearby.filter(name__icontains="electric")
         assert len(electric_nearby) >= 0
 
@@ -261,7 +261,7 @@ class TestTutorialExamples:
         kml = KMLFile.from_string(self.complex_kml)
 
         # Process in batches
-        all_placemarks = kml.placemarks.all(flatten=True)
+        all_placemarks = kml.placemarks.all()
         batch_size = 2
 
         processed_count = 0
@@ -290,7 +290,7 @@ class TestTutorialExamples:
                 skipped_count = 0
 
                 # Process with error handling
-                for placemark in kml.placemarks.all(flatten=True):
+                for placemark in kml.placemarks.all():
                     try:
                         if placemark.validate():
                             processed_count += 1
@@ -321,7 +321,7 @@ class TestTutorialExamples:
         def kml_to_dataframe_data(kml_file: KMLFile) -> List[Dict[str, Any]]:
             """Convert KML to DataFrame-compatible data."""
             data = []
-            for placemark in kml_file.placemarks.all(flatten=True):
+            for placemark in kml_file.placemarks.all():
                 row = {
                     "name": placemark.name,
                     "description": placemark.description,

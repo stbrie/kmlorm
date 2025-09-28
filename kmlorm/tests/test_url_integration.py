@@ -130,8 +130,8 @@ class TestKMLFileURLIntegration:
         maryland_folder = next((f for f in folders if f.name == "Maryland Stores"), None)
         assert maryland_folder is not None
 
-        # Verify we have placemarks (use flatten=True to get from nested folders)
-        placemarks = kml.placemarks.all(flatten=True)
+        # Verify we have placemarks (includes nested folders)
+        placemarks = kml.placemarks.all()
         assert len(placemarks) > 0
 
         # Find the Rosedale store
@@ -210,11 +210,11 @@ class TestKMLFileURLIntegration:
         assert isinstance(kml, KMLFile)
 
         # Verify we can do the operations shown in quickstart
-        placemarks = kml.placemarks.all(flatten=True)
+        placemarks = kml.placemarks.all()
         assert len(placemarks) > 0
 
         # Test basic query operations from quickstart
-        stores_with_electric = kml.placemarks.all(flatten=True).filter(name__icontains="electric")
+        stores_with_electric = kml.placemarks.all().filter(name__icontains="electric")
         assert len(stores_with_electric) > 0
 
         # Test coordinate access pattern from quickstart

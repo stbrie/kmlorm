@@ -49,13 +49,13 @@ Quick Example
    # Load KML file
    kml = KMLFile.from_file('places.kml')
 
-   # Query placemarks (use flatten=True to include those in folders)
-   all_places = kml.placemarks.all(flatten=True)
-   capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains='capital')
-   nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+   # Query placemarks (includes those in nested folders)
+   all_places = kml.placemarks.all()
+   capital_stores = kml.placemarks.all().filter(name__icontains='capital')
+   nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
    # Chain queries
-   nearby_open = (kml.placemarks.all(flatten=True)
+   nearby_open = (kml.placemarks.all()
        .filter(name__icontains='electric')
        .near(-76.6, 39.3, radius_km=50)
        .filter(visibility=True)
@@ -71,11 +71,8 @@ Work with nested folder structures using intuitive methods:
    # Get only direct children (root-level placemarks)
    root_placemarks = kml.placemarks.children()
 
-   # Get ALL placemarks including nested ones (new preferred way)
+   # Get ALL placemarks including nested ones
    all_placemarks = kml.placemarks.all()
-
-   # The above is equivalent to (but cleaner than):
-   all_placemarks = kml.placemarks.all(flatten=True)
 
    # Same pattern works for folders
    root_folders = kml.folders.children()

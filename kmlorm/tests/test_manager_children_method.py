@@ -100,9 +100,9 @@ class TestManagerChildrenMethod(unittest.TestCase):
         self.assertTrue(children_names.issubset(all_names))
 
     def test_children_vs_all_with_flatten_true(self) -> None:
-        """Test that .children() differs from .all(flatten=True)."""
+        """Test that .children() differs from .all()."""
         children_result = self.kml.placemarks.children()
-        flattened_result = self.kml.placemarks.all(flatten=True)
+        flattened_result = self.kml.placemarks.all()
 
         # children() should return fewer elements than flatten=True
         self.assertLess(len(children_result), len(flattened_result))
@@ -181,7 +181,7 @@ class TestManagerChildrenMethod(unittest.TestCase):
         self.assertEqual(len(children_result), 0)
 
         # But flatten=True should still find the nested placemark
-        flattened_result = kml.placemarks.all(flatten=True)
+        flattened_result = kml.placemarks.all()
         self.assertEqual(len(flattened_result), 1)
 
     def test_children_return_type(self) -> None:

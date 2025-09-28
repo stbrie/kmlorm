@@ -6,7 +6,6 @@ are functional and produce the expected results.
 """
 
 # pylint: disable=duplicate-code
-import warnings
 
 import unittest
 import tempfile
@@ -165,25 +164,25 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         """Test the flattened manager access example from Working with Managers section."""
         # Example from documentation:
         # # Access ALL elements including those nested in folders
-        # all_placemarks = kml.placemarks.all(flatten=True)
-        # all_folders = kml.folders.all(flatten=True)
-        # all_paths = kml.paths.all(flatten=True)
-        # all_polygons = kml.polygons.all(flatten=True)
-        # all_points = kml.points.all(flatten=True)
-        # all_multigeometries = kml.multigeometries.all(flatten=True)
+        # all_placemarks = kml.placemarks.all()
+        # all_folders = kml.folders.all()
+        # all_paths = kml.paths.all()
+        # all_polygons = kml.polygons.all()
+        # all_points = kml.points.all()
+        # all_multigeometries = kml.multigeometries.all()
 
         kml = KMLFile.from_file(self.temp_file.name)
 
         # Access ALL elements including those nested in folders as shown in documentation
-        all_placemarks = kml.placemarks.all(flatten=True)
-        all_folders = kml.folders.all(flatten=True)
-        all_paths = kml.paths.all(flatten=True)
+        all_placemarks = kml.placemarks.all()
+        all_folders = kml.folders.all()
+        all_paths = kml.paths.all()
         assert all_paths is not None
-        all_polygons = kml.polygons.all(flatten=True)
+        all_polygons = kml.polygons.all()
         assert all_polygons is not None
-        all_points = kml.points.all(flatten=True)
+        all_points = kml.points.all()
         assert all_points is not None
-        all_multigeometries = kml.multigeometries.all(flatten=True)
+        all_multigeometries = kml.multigeometries.all()
         assert all_multigeometries is not None
         # Verify flatten=True includes nested elements
         self.assertEqual(len(all_placemarks), 5)  # All placemarks including nested ones
@@ -298,14 +297,14 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         """Test the comprehensive queries example from Querying Elements section."""
         # Example from documentation:
         # # Comprehensive queries (including nested elements)
-        # all_capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains='capital')
-        # all_visible_folders = kml.folders.all(flatten=True).filter(visibility=True)
+        # all_capital_stores = kml.placemarks.all().filter(name__icontains='capital')
+        # all_visible_folders = kml.folders.all().filter(visibility=True)
 
         kml = KMLFile.from_file(self.temp_file.name)
 
         # Comprehensive queries (including nested elements) as shown in documentation
-        all_capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
-        all_visible_folders = kml.folders.all(flatten=True).filter(visibility=True)
+        all_capital_stores = kml.placemarks.all().filter(name__icontains="capital")
+        all_visible_folders = kml.folders.all().filter(visibility=True)
 
         # With flatten=True, should find nested "Capital Electric" stores
         self.assertGreater(len(all_capital_stores), 0)
@@ -321,16 +320,16 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         """Test the geospatial queries example from Querying Elements section."""
         # Example from documentation:
         # # Geospatial queries
-        # nearby_stores = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
-        # bounded_elements = kml.placemarks.all(flatten=True).within_bounds(
+        # nearby_stores = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
+        # bounded_elements = kml.placemarks.all().within_bounds(
         #     north=39.5, south=39.0, east=-76.0, west=-77.0
         # )
 
         kml = KMLFile.from_file(self.temp_file.name)
 
         # Geospatial queries as shown in documentation
-        nearby_stores = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
-        bounded_elements = kml.placemarks.all(flatten=True).within_bounds(
+        nearby_stores = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
+        bounded_elements = kml.placemarks.all().within_bounds(
             north=39.5, south=39.0, east=-76.0, west=-77.0
         )
 
@@ -348,7 +347,7 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         # # Get specific elements
         # try:
         #     specific_store =
-        #                kml.placemarks.all(flatten=True).get(name='Capital Electric - Rosedale')
+        #                kml.placemarks.all().get(name='Capital Electric - Rosedale')
         #     print(f"Found: {specific_store.name} at {specific_store.address}")
         # except KMLElementNotFound:
         #     print("Store not found")
@@ -357,9 +356,7 @@ class TestKMLFileDocsExamples(unittest.TestCase):
 
         # Get specific elements as shown in documentation
         try:
-            specific_store = kml.placemarks.all(flatten=True).get(
-                name="Capital Electric - Rosedale"
-            )
+            specific_store = kml.placemarks.all().get(name="Capital Electric - Rosedale")
             found_str = f"Found: {specific_store.name} at {specific_store.address}"
 
             # Verify we found the specific store
@@ -371,7 +368,7 @@ class TestKMLFileDocsExamples(unittest.TestCase):
 
         # Test the exception handling path
         try:
-            nonexistent_store = kml.placemarks.all(flatten=True).get(name="Nonexistent Store")
+            nonexistent_store = kml.placemarks.all().get(name="Nonexistent Store")
             assert nonexistent_store is not None
             self.fail("Should have raised KMLElementNotFound")
         except KMLElementNotFound:
@@ -460,30 +457,13 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         # Should include nested
         self.assertGreaterEqual(len(current_all_placemarks), len(root_placemarks))
 
-        # Test deprecated flatten=True behavior (shows warning but works)
+        # Verify that .all() includes nested elements and .children() returns only direct children
+        # Should include all placemarks including nested ones
+        self.assertEqual(len(current_all_placemarks), 5)
+        self.assertEqual(len(root_placemarks), 1)  # Should only include direct children
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            all_placemarks = kml.placemarks.all(flatten=True)
-            # Should get deprecation warning
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-            self.assertIn("flatten=True parameter is deprecated", str(w[0].message))
-
-        # Results should be same as new default behavior
-        self.assertEqual(len(all_placemarks), len(current_all_placemarks))
-
-        # Test deprecated flatten=False behavior (shows warning and returns children)
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            children_placemarks = kml.placemarks.all(flatten=False)
-            # Should get deprecation warning
-            self.assertEqual(len(w), 1)
-            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
-            self.assertIn("flatten=False parameter is deprecated", str(w[0].message))
-
-        # Results should match .children()
-        self.assertEqual(len(children_placemarks), len(root_placemarks))
+        # Verify .all() and .children() return different result sets
+        self.assertNotEqual(len(current_all_placemarks), len(root_placemarks))
 
         # Verify this applies to all element types as documented
         root_folders = kml.folders.children()

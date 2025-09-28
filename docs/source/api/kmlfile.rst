@@ -10,13 +10,12 @@ It can be imported directly from the main package:
    from kmlorm import KMLFile
 
 .. note::
-   **Understanding flatten Parameter**
+   **Understanding Hierarchical Access**
 
-   By default, manager methods like ``kml.placemarks.all()`` only return elements at the document root level.
-   To include elements from nested folders, use ``flatten=True``:
+   Manager methods provide two ways to access elements:
 
-   * ``kml.placemarks.all()`` - Root-level placemarks only
-   * ``kml.placemarks.all(flatten=True)`` - All placemarks including nested ones
+   * ``kml.placemarks.children()`` - Direct children only (root-level elements)
+   * ``kml.placemarks.all()`` - All elements including nested ones in folders
 
    This applies to all element types: placemarks, folders, paths, polygons, points, and multigeometries.
 
@@ -59,21 +58,21 @@ Each manager supports the full range of Django-style query methods including ``.
 
    kml = KMLFile.from_file('example.kml')
 
-   # Access different element types (root-level only)
-   root_placemarks = kml.placemarks.all()
-   root_folders = kml.folders.all()
-   root_paths = kml.paths.all()
-   root_polygons = kml.polygons.all()
-   root_points = kml.points.all()
-   root_multigeometries = kml.multigeometries.all()
+   # Access different element types (direct children only)
+   root_placemarks = kml.placemarks.children()
+   root_folders = kml.folders.children()
+   root_paths = kml.paths.children()
+   root_polygons = kml.polygons.children()
+   root_points = kml.points.children()
+   root_multigeometries = kml.multigeometries.children()
 
    # Access ALL elements including those nested in folders
-   all_placemarks = kml.placemarks.all(flatten=True)
-   all_folders = kml.folders.all(flatten=True)
-   all_paths = kml.paths.all(flatten=True)
-   all_polygons = kml.polygons.all(flatten=True)
-   all_points = kml.points.all(flatten=True)
-   all_multigeometries = kml.multigeometries.all(flatten=True)
+   all_placemarks = kml.placemarks.all()
+   all_folders = kml.folders.all()
+   all_paths = kml.paths.all()
+   all_polygons = kml.polygons.all()
+   all_points = kml.points.all()
+   all_multigeometries = kml.multigeometries.all()
 
 Document Properties
 -------------------
@@ -122,23 +121,23 @@ Querying Elements
 
    kml = KMLFile.from_file('stores.kml')
 
-   # Basic queries (root-level elements only)
-   capital_stores = kml.placemarks.filter(name__icontains='capital')
-   visible_folders = kml.folders.filter(visibility=True)
+   # Basic queries (direct children only)
+   capital_stores = kml.placemarks.children().filter(name__icontains='capital')
+   visible_folders = kml.folders.children().filter(visibility=True)
 
    # Comprehensive queries (including nested elements)
-   all_capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains='capital')
-   all_visible_folders = kml.folders.all(flatten=True).filter(visibility=True)
+   all_capital_stores = kml.placemarks.all().filter(name__icontains='capital')
+   all_visible_folders = kml.folders.all().filter(visibility=True)
 
    # Geospatial queries
-   nearby_stores = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
-   bounded_elements = kml.placemarks.all(flatten=True).within_bounds(
+   nearby_stores = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
+   bounded_elements = kml.placemarks.all().within_bounds(
        north=39.5, south=39.0, east=-76.0, west=-77.0
    )
 
    # Get specific elements
    try:
-       specific_store = kml.placemarks.all(flatten=True).get(name='Capital Electric - Rosedale')
+       specific_store = kml.placemarks.all().get(name='Capital Electric - Rosedale')
        print(f"Found: {specific_store.name} at {specific_store.address}")
    except KMLElementNotFound:
        print("Store not found")

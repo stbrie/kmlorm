@@ -8,12 +8,10 @@ Advanced Querying
 
 .. note:: **Folder Hierarchy Behavior**
 
-   By default, ``kml.placemarks.all()`` and related query methods only return
-   placemarks at the document level (not inside folders). To include placemarks
-   from all nested folders, use the ``flatten=True`` parameter:
+   KML ORM provides two methods for accessing elements:
 
-   * Document-level only: ``kml.placemarks.all()``
-   * All placemarks (flattened): ``kml.placemarks.all(flatten=True)``
+   * Direct children only: ``kml.placemarks.children()``
+   * All elements (including nested): ``kml.placemarks.all()``
 
 Field Lookups
 ~~~~~~~~~~~~~
@@ -26,25 +24,25 @@ KML ORM supports various Django-style field lookups:
 
    kml = KMLFile.from_file('stores.kml')
 
-   # Exact match (default) - use flatten=True to include folder contents
-   exact = kml.placemarks.all(flatten=True).filter(name='Capital Electric Supply')
+   # Exact match (default) - includes all elements including nested
+   exact = kml.placemarks.all().filter(name='Capital Electric Supply')
 
    # Case-insensitive contains
-   contains = kml.placemarks.all(flatten=True).filter(name__icontains='electric')
+   contains = kml.placemarks.all().filter(name__icontains='electric')
 
    # Starts with / ends with
-   starts = kml.placemarks.all(flatten=True).filter(name__startswith='Capital')
-   ends = kml.placemarks.all(flatten=True).filter(name__endswith='Store')
+   starts = kml.placemarks.all().filter(name__startswith='Capital')
+   ends = kml.placemarks.all().filter(name__endswith='Store')
 
    # In a list of values
-   multiple = kml.placemarks.all(flatten=True).filter(name__in=['Hardware Store', 'Electric Depot'])
+   multiple = kml.placemarks.all().filter(name__in=['Hardware Store', 'Electric Depot'])
 
    # Null checks
-   with_description = kml.placemarks.all(flatten=True).filter(description__isnull=False)
-   without_description = kml.placemarks.all(flatten=True).filter(description__isnull=True)
+   with_description = kml.placemarks.all().filter(description__isnull=False)
+   without_description = kml.placemarks.all().filter(description__isnull=True)
 
    # Regular expressions
-   regex_match = kml.placemarks.all(flatten=True).filter(name__regex=r'^Capital.*Electric.*$')
+   regex_match = kml.placemarks.all().filter(name__regex=r'^Capital.*Electric.*$')
 
 Complex Queries
 ~~~~~~~~~~~~~~~
@@ -77,20 +75,20 @@ Navigate folder hierarchies and access nested elements:
 
 .. code-block:: python
 
-   # Get all folders
-   folders = kml.folders.all()
+   # Get all folders (direct children only)
+   folders = kml.folders.children()
 
    for folder in folders:
        print(f"Folder: {folder.name}")
        print(f"  Placemarks: {folder.placemarks.count()}")
        print(f"  Subfolders: {folder.folders.count()}")
 
-       # Access folder contents
-       for placemark in folder.placemarks.all():
+       # Access folder contents (direct children only)
+       for placemark in folder.placemarks.children():
            print(f"    - {placemark.name}")
 
-       # Recursively process subfolders
-       for subfolder in folder.folders.all():
+       # Recursively process subfolders (direct children only)
+       for subfolder in folder.folders.children():
            print(f"    Subfolder: {subfolder.name}")
 
 Cross-Folder Queries
@@ -100,16 +98,16 @@ Query across all folders simultaneously:
 
 .. code-block:: python
 
-   # All placemarks regardless of folder (using flatten)
-   all_stores = kml.placemarks.all(flatten=True).filter(name__icontains='store')
+   # All placemarks regardless of folder (includes nested)
+   all_stores = kml.placemarks.all().filter(name__icontains='store')
 
-   # Get placemarks from specific folder
-   supply_folder = kml.folders.get(name='Supply Locations')
-   supply_stores = supply_folder.placemarks.all()
+   # Get placemarks from specific folder (direct children only)
+   supply_folder = kml.folders.children().get(name='Supply Locations')
+   supply_stores = supply_folder.placemarks.children()
 
-**Important**: By default, ``kml.placemarks.all()`` only returns placemarks
-at the document level (not inside folders). Use ``flatten=True`` to include
-placemarks from all nested folders recursively.
+**Important**: ``kml.placemarks.all()`` includes all placemarks including
+those in nested folders. Use ``kml.placemarks.children()`` for direct
+children only.
 
 Coordinate Operations
 ---------------------
@@ -133,9 +131,9 @@ Calculate distances between placemarks:
 
 .. code-block:: python
 
-   # Get two placemarks
-   store1 = kml.placemarks.all(flatten=True).get(name__contains='Rosedale')
-   store2 = kml.placemarks.all(flatten=True).get(name__contains='Timonium')
+   # Get two placemarks (includes nested)
+   store1 = kml.placemarks.all().get(name__contains='Rosedale')
+   store2 = kml.placemarks.all().get(name__contains='Timonium')
 
    # Calculate distance
    if store1.coordinates and store2.coordinates:
@@ -163,8 +161,8 @@ Work with path/route data:
 
 .. code-block:: python
 
-   # Get all paths
-   paths = kml.paths.all()
+   # Get all paths (direct children only)
+   paths = kml.paths.children()
 
    for path in paths:
        print(f"Path: {path.name}")
@@ -179,8 +177,8 @@ Work with polygon areas:
 
 .. code-block:: python
 
-   # Get all polygons
-   polygons = kml.polygons.all()
+   # Get all polygons (direct children only)
+   polygons = kml.polygons.children()
 
    for polygon in polygons:
        print(f"Polygon: {polygon.name}")
@@ -200,7 +198,7 @@ Ensure data integrity with validation:
 
    from kmlorm.core.exceptions import KMLValidationError
 
-   for placemark in kml.placemarks.all(flatten=True):
+   for placemark in kml.placemarks.all():
        try:
            if placemark.validate():
                print(f"✓ {placemark.name} is valid")
@@ -255,7 +253,7 @@ Process large datasets efficiently:
 .. code-block:: python
 
    # Process in batches
-   all_placemarks = kml.placemarks.all(flatten=True)
+   all_placemarks = kml.placemarks.all()
    batch_size = 100
 
    for i in range(0, len(all_placemarks), batch_size):
@@ -292,7 +290,7 @@ Handle errors gracefully in production code:
            kml = KMLFile.from_file(file_path)
 
            # Process with error handling
-           for placemark in kml.placemarks.all(flatten=True):
+           for placemark in kml.placemarks.all():
                try:
                    if placemark.validate():
                        process_placemark(placemark)

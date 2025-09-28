@@ -533,7 +533,7 @@ This specification reflects the current state of the kmlorm library as implement
 - **KML Parsing**: Full lxml-based XML/KML parsing with namespace support
 - **URL Integration**: Load KML from HTTP/HTTPS URLs
 - **Data Access**: `to_dict()` methods for all models for external library integration
-- **Hierarchical Structure**: Nested folders with `flatten=True` support
+- **Hierarchical Structure**: Nested folders with `.all()` (includes nested) and `.children()` (direct children) methods
 - **Type Safety**: Full type annotations throughout
 - **Comprehensive Testing**: 22 test files with documentation validation
 

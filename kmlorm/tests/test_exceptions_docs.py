@@ -199,7 +199,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         # kml = KMLFile.from_file('stores.kml')
         #
         # try:
-        #     store = kml.placemarks.all(flatten=True).get(name='Nonexistent Store')
+        #     store = kml.placemarks.all().get(name='Nonexistent Store')
         # except KMLElementNotFound as e:
         #     print(f"Element not found: {e}")
         #     print(f"Element type: {e.element_type}")
@@ -208,7 +208,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         kml = KMLFile.from_file(self.temp_file.name)
 
         with self.assertRaises(KMLElementNotFound) as context:
-            _ = kml.placemarks.all(flatten=True).get(name="Nonexistent Store")
+            _ = kml.placemarks.all().get(name="Nonexistent Store")
 
         e = context.exception
         # Test the formatted messages as shown in documentation
@@ -229,7 +229,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         kmlorm.core.exceptions.rst."""
         # Example from kmlorm.core.exceptions.rst:
         # try:
-        #     store = kml.placemarks.all(flatten=True).get(name__icontains='Store')
+        #     store = kml.placemarks.all().get(name__icontains='Store')
         # except KMLMultipleElementsReturned as e:
         #     print(f"Multiple elements found: {e}")
         #     print(f"Element type: {e.element_type}")
@@ -239,7 +239,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         kml = KMLFile.from_file(self.temp_file.name)
 
         with self.assertRaises(KMLMultipleElementsReturned) as context:
-            _ = kml.placemarks.all(flatten=True).get(name__icontains="Store")
+            _ = kml.placemarks.all().get(name__icontains="Store")
 
         e = context.exception
         # Test the formatted messages as shown in documentation

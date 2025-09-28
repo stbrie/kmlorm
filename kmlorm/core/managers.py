@@ -8,7 +8,6 @@ to Django's ORM managers.
 
 # pylint: disable=too-many-public-methods, too-many-lines
 from __future__ import annotations
-import warnings
 from typing import TYPE_CHECKING, Any, List, Optional, TypeVar, Generic, cast
 
 
@@ -98,53 +97,21 @@ class KMLManager(Generic[T]):
         """
         return KMLQuerySet(self.elements)
 
-    def all(self, flatten: Optional[bool] = None) -> "KMLQuerySet[T]":
+    def all(self) -> "KMLQuerySet[T]":
         """
         Return all elements as a QuerySet, including those in nested folders.
-
-        Args:
-            flatten: Deprecated parameter. Use .children() for direct children only.
 
         Returns:
             QuerySet containing all elements including those in nested folders
 
-        .. deprecated::
-            The flatten parameter is deprecated. Use .children() for direct children
-            or .all() for all elements including nested ones.
-
         Example:
-            >>> # Preferred new API
-            >>> all_placemarks = kml.placemarks.all()        # All elements everywhere
-            >>> root_placemarks = kml.placemarks.children()  # Direct children only
+            >>> # Get all placemarks including those in nested folders
+            >>> all_placemarks = kml.placemarks.all()
             >>>
-            >>> # Deprecated (still works but shows warning)
-            >>> all_placemarks = kml.placemarks.all(flatten=True)   # Deprecated
-            >>> root_placemarks = kml.placemarks.all(flatten=False) # Deprecated
+            >>> # For direct children only, use .children()
+            >>> root_placemarks = kml.placemarks.children()
         """
-        # Handle explicit flatten parameter with warnings
-        if flatten is not None:
-
-            if flatten is True:
-                warnings.warn(
-                    "The flatten=True parameter is deprecated and will be "
-                    "removed in a future version. "
-                    "Use .all() instead (new default behavior includes nested elements).",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                # Continue with new behavior (flatten=True is now default)
-            elif flatten is False:
-                warnings.warn(
-                    "The flatten=False parameter is deprecated and will be removed in "
-                    " a future version. "
-                    "Use .children() instead for direct children only.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-                # Maintain old behavior during transition to prevent breaking changes
-                return self.get_queryset()  # Return direct children only
-
-        # New default behavior: always include nested elements
+        # Always include nested elements
         if not self._folders_manager:
             return self.get_queryset()
 

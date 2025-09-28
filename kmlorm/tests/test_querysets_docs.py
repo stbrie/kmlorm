@@ -433,7 +433,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the single chain example from QuerySet Chaining section."""
         # Example from documentation:
         # stores = (
-        #     kml.placemarks.all(flatten=True)
+        #     kml.placemarks.all()
         #     .near(-76.6, 39.3, radius_km=50)
         #     .filter(visibility=True, name__icontains='store')
         #     .order_by('name')

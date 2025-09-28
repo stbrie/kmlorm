@@ -30,27 +30,27 @@ class TestTutorialFieldLookupsExact:
 
         # ===== EXACT COPY OF CODE FROM TUTORIAL.RST =====
 
-        # Exact match (default) - use flatten=True to include folder contents
-        exact = kml.placemarks.all(flatten=True).filter(name="Capital Electric Supply")
+        # Exact match (default) - includes folder contents
+        exact = kml.placemarks.all().filter(name="Capital Electric Supply")
 
         # Case-insensitive contains
-        contains = kml.placemarks.all(flatten=True).filter(name__icontains="electric")
+        contains = kml.placemarks.all().filter(name__icontains="electric")
 
         # Starts with / ends with
-        starts = kml.placemarks.all(flatten=True).filter(name__startswith="Capital")
-        ends = kml.placemarks.all(flatten=True).filter(name__endswith="Store")
+        starts = kml.placemarks.all().filter(name__startswith="Capital")
+        ends = kml.placemarks.all().filter(name__endswith="Store")
 
         # In a list of values
-        multiple = kml.placemarks.all(flatten=True).filter(
+        multiple = kml.placemarks.all().filter(
             name__in=["Hardware Store", "Electric Depot"]
         )
 
         # Null checks
-        with_description = kml.placemarks.all(flatten=True).filter(description__isnull=False)
-        without_description = kml.placemarks.all(flatten=True).filter(description__isnull=True)
+        with_description = kml.placemarks.all().filter(description__isnull=False)
+        without_description = kml.placemarks.all().filter(description__isnull=True)
 
         # Regular expressions
-        regex_match = kml.placemarks.all(flatten=True).filter(name__regex=r"^Capital.*Electric.*$")
+        regex_match = kml.placemarks.all().filter(name__regex=r"^Capital.*Electric.*$")
 
         # ===== VERIFY THE EXACT RESULTS USERS SHOULD EXPECT =====
 
@@ -98,10 +98,10 @@ class TestTutorialFieldLookupsExact:
         kml = KMLFile.from_file(self.tutorial_kml_file)
 
         # Run one of the tutorial examples to prove it works with real file loading
-        exact = kml.placemarks.all(flatten=True).filter(name="Capital Electric Supply")
+        exact = kml.placemarks.all().filter(name="Capital Electric Supply")
         assert len(exact) == 1
         assert exact[0].name == "Capital Electric Supply"
 
         # Test additional examples to prove the file contains the right data
-        contains = kml.placemarks.all(flatten=True).filter(name__icontains="electric")
+        contains = kml.placemarks.all().filter(name__icontains="electric")
         assert len(contains) == 2  # Capital Electric Supply and Electric Depot

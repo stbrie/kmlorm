@@ -82,11 +82,11 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_basic_manager_operations_flattened_elements_example(self) -> None:
         """Test the flattened elements example from Basic Manager Operations section."""
         # Example from documentation:
-        # all_placemarks = kml.placemarks.all(flatten=True)
-        # all_folders = kml.folders.all(flatten=True)
+        # all_placemarks = kml.placemarks.all()
+        # all_folders = kml.folders.all()
 
-        all_placemarks = self.kml.placemarks.all(flatten=True)
-        all_folders = self.kml.folders.all(flatten=True)
+        all_placemarks = self.kml.placemarks.all()
+        all_folders = self.kml.folders.all()
 
         # Verify flatten parameter works (should include nested elements when present)
         self.assertIsNotNone(all_placemarks)
@@ -98,11 +98,11 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_querying_with_managers_basic_filtering_example(self) -> None:
         """Test the basic filtering example from Querying with Managers section."""
         # Example from documentation:
-        # capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains='capital')
-        # visible_elements = kml.placemarks.all(flatten=True).filter(visibility=True)
+        # capital_stores = kml.placemarks.all().filter(name__icontains='capital')
+        # visible_elements = kml.placemarks.all().filter(visibility=True)
 
-        capital_stores = self.kml.placemarks.all(flatten=True).filter(name__icontains="capital")
-        visible_elements = self.kml.placemarks.all(flatten=True).filter(visibility=True)
+        capital_stores = self.kml.placemarks.all().filter(name__icontains="capital")
+        visible_elements = self.kml.placemarks.all().filter(visibility=True)
 
         # Verify filtering works correctly
         self.assertEqual(len(capital_stores), 2)  # Capital Electric and Capital Hardware
@@ -118,7 +118,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         """Test the successful get single element example from Querying with Managers section."""
         # Example from documentation:
         # try:
-        #     specific_store = kml.placemarks.all(flatten=True).get(name='Capital Electric')
+        #     specific_store = kml.placemarks.all().get(name='Capital Electric')
         #     print(f"Found: {specific_store.name}")
         # except KMLElementNotFound:
         #     print("Store not found")
@@ -126,7 +126,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         #     print("Multiple stores found - be more specific")
 
         try:
-            specific_store = self.kml.placemarks.all(flatten=True).get(name="Capital Electric")
+            specific_store = self.kml.placemarks.all().get(name="Capital Electric")
             found_message = f"Found: {specific_store.name}"
 
             # Verify we found the right element
@@ -141,7 +141,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         """Test the element not found example from Querying with Managers section."""
         # Test the KMLElementNotFound exception path
         try:
-            _ = self.kml.placemarks.all(flatten=True).get(name="Nonexistent Store")
+            _ = self.kml.placemarks.all().get(name="Nonexistent Store")
             self.fail("Should have raised KMLElementNotFound")
         except KMLElementNotFound:
             error_message = "Store not found"
@@ -165,10 +165,10 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_querying_with_managers_ordering_example(self) -> None:
         """Test the ordering example from Querying with Managers section."""
         # Example from documentation:
-        # sorted_placemarks = kml.placemarks.all(flatten=True).order_by('name')
-        # recent_placemarks = kml.placemarks.all(flatten=True).order_by('-created_date')
+        # sorted_placemarks = kml.placemarks.all().order_by('name')
+        # recent_placemarks = kml.placemarks.all().order_by('-created_date')
 
-        sorted_placemarks = self.kml.placemarks.all(flatten=True).order_by("name")
+        sorted_placemarks = self.kml.placemarks.all().order_by("name")
 
         # Verify ordering by name works
         self.assertEqual(len(sorted_placemarks), 3)
@@ -178,16 +178,16 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         self.assertEqual(names, sorted(names))
 
         # Test reverse ordering (using name since created_date might not be set)
-        reverse_sorted = self.kml.placemarks.all(flatten=True).order_by("-name")
+        reverse_sorted = self.kml.placemarks.all().order_by("-name")
         reverse_names = [p.name for p in reverse_sorted if p.name is not None]
         self.assertEqual(reverse_names, sorted(names, reverse=True))
 
     def test_geospatial_queries_near_example(self) -> None:
         """Test the near query example from Geospatial Queries section."""
         # Example from documentation:
-        # nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+        # nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
-        nearby = self.kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+        nearby = self.kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
         # Verify geospatial query works (all our test placemarks should be within 25km)
         self.assertIsNotNone(nearby)
@@ -197,11 +197,11 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_geospatial_queries_within_bounds_example(self) -> None:
         """Test the within bounds example from Geospatial Queries section."""
         # Example from documentation:
-        # bounded = kml.placemarks.all(flatten=True).within_bounds(
+        # bounded = kml.placemarks.all().within_bounds(
         #     north=39.5, south=39.0, east=-76.0, west=-77.0
         # )
 
-        bounded = self.kml.placemarks.all(flatten=True).within_bounds(
+        bounded = self.kml.placemarks.all().within_bounds(
             north=39.5, south=39.0, east=-76.0, west=-77.0
         )
 
@@ -213,11 +213,11 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_geospatial_queries_coordinate_validity_example(self) -> None:
         """Test the coordinate validity example from Geospatial Queries section."""
         # Example from documentation:
-        # valid_coords = kml.placemarks.all(flatten=True).valid_coordinates()
-        # has_coords = kml.placemarks.all(flatten=True).has_coordinates()
+        # valid_coords = kml.placemarks.all().valid_coordinates()
+        # has_coords = kml.placemarks.all().has_coordinates()
 
-        valid_coords = self.kml.placemarks.all(flatten=True).valid_coordinates()
-        has_coords = self.kml.placemarks.all(flatten=True).has_coordinates()
+        valid_coords = self.kml.placemarks.all().valid_coordinates()
+        has_coords = self.kml.placemarks.all().has_coordinates()
 
         # Verify coordinate validation queries
         self.assertEqual(len(valid_coords), 3)  # All our placemarks have valid coordinates
@@ -369,12 +369,12 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         """Test the flatten best practice example from Best Practices section."""
         # Example from documentation:
         # # Good - gets all placemarks including nested ones
-        # all_stores = kml.placemarks.all(flatten=True).filter(name__icontains='store')
+        # all_stores = kml.placemarks.all().filter(name__icontains='store')
         # # Limited - only gets root-level placemarks
         # root_stores = kml.placemarks.filter(name__icontains='store')
 
         # Good practice - comprehensive query
-        all_stores = self.kml.placemarks.all(flatten=True).filter(name__icontains="store")
+        all_stores = self.kml.placemarks.all().filter(name__icontains="store")
 
         # Limited practice - root level only
         root_stores = self.kml.placemarks.filter(name__icontains="store")
@@ -390,24 +390,24 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         # Example from documentation:
         # from kmlorm.core.exceptions import KMLElementNotFound, KMLMultipleElementsReturned
         # try:
-        #     unique_store = kml.placemarks.all(flatten=True).get(name='Unique Store')
+        #     unique_store = kml.placemarks.all().get(name='Unique Store')
         # except KMLElementNotFound:
         #     # Handle case where element doesn't exist
         #     unique_store = kml.placemarks.create(name='Unique Store')
         # except KMLMultipleElementsReturned:
         #     # Handle case where multiple elements match
-        #     stores = kml.placemarks.all(flatten=True).filter(name='Unique Store')
+        #     stores = kml.placemarks.all().filter(name='Unique Store')
         #     unique_store = stores.first()
 
         unique_store = None
         try:
-            unique_store = self.kml.placemarks.all(flatten=True).get(name="Unique Store")
+            unique_store = self.kml.placemarks.all().get(name="Unique Store")
         except KMLElementNotFound:
             # Handle case where element doesn't exist
             unique_store = self.kml.placemarks.create(name="Unique Store")
         except KMLMultipleElementsReturned:
             # Handle case where multiple elements match
-            stores = self.kml.placemarks.all(flatten=True).filter(name="Unique Store")
+            stores = self.kml.placemarks.all().filter(name="Unique Store")
             unique_store = stores.first()
 
         assert unique_store is not None  # For mypy
@@ -446,7 +446,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         # Example from documentation:
         # # Chain geospatial and attribute filters
         # nearby_visible_stores = (
-        #     kml.placemarks.all(flatten=True)
+        #     kml.placemarks.all()
         #     .near(-76.6, 39.3, radius_km=10)
         #     .filter(visibility=True)
         #     .filter(name__icontains='store')
@@ -454,7 +454,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
 
         # Chain geospatial and attribute filters
         nearby_visible_stores = (
-            self.kml.placemarks.all(flatten=True)
+            self.kml.placemarks.all()
             .near(-76.6, 39.3, radius_km=10)
             .filter(visibility=True)
             .filter(name__icontains="store")

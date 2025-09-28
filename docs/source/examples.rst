@@ -17,8 +17,8 @@ Analyze store locations and find optimal coverage areas:
        """Analyze store coverage for a city."""
        kml = KMLFile.from_file(kml_file_path)
 
-       # Get all stores
-       stores = kml.placemarks.filter(name__icontains='store')
+       # Get all stores (including those in folders)
+       stores = kml.placemarks.all().filter(name__icontains='store')
        print(f"Total stores: {stores.count()}")
 
        # Find stores within city limits
@@ -39,6 +39,9 @@ Analyze store locations and find optimal coverage areas:
                })
 
        # Convert to DataFrame for analysis
+       [TODO: a "closest to" manager method seems like it fits in with our needs, but maybe we want a separate,
+       lightweight package for geographical calculations, like our distance_to() method, within_bounds() method, etc.
+       We should discuss options here.]
        df = pd.DataFrame(coverage_analysis)
        df = df.sort_values('distance_to_center')
 
@@ -46,6 +49,9 @@ Analyze store locations and find optimal coverage areas:
        print(df.head().to_string(index=False))
 
        return df
+
+    [TODO: note that Placemark has a distance_to() that uses haversine distance, implementing a 
+    calculation is not strictly necessary]
 
    def calculate_distance(coord1, coord2):
        """Calculate distance between two coordinate points."""
@@ -104,6 +110,7 @@ Extract and analyze route data from KML paths:
        for i in range(1, len(coordinates)):
            # Calculate distance between consecutive points
            # This is a simplified calculation
+           [TODO: we have a distance_to() for Placemark]
            prev_coord = coordinates[i-1]
            curr_coord = coordinates[i]
            segment_length = calculate_segment_distance(prev_coord, curr_coord)
@@ -246,7 +253,7 @@ Perform spatial analysis on KML data:
        """Find clusters of nearby placemarks."""
        kml = KMLFile.from_file(kml_file_path)
 
-       placemarks_with_coords = kml.placemarks.has_coordinates()
+       placemarks_with_coords = kml.placemarks.all().has_coordinates()
        clusters = []
        processed = set()
 
@@ -409,11 +416,11 @@ Process multiple KML files:
                summary = {
                    'filename': kml_file.name,
                    'document_name': kml.document_name,
-                   'placemark_count': kml.placemarks.count(),
-                   'folder_count': kml.folders.count(),
-                   'path_count': kml.paths.count(),
-                   'polygon_count': kml.polygons.count(),
-                   'has_coordinates': kml.placemarks.has_coordinates().count(),
+                   'placemark_count': kml.placemarks.all().count(),
+                   'folder_count': kml.folders.all().count(),
+                   'path_count': kml.paths.all().count(),
+                   'polygon_count': kml.polygons.all().count(),
+                   'has_coordinates': kml.placemarks.all().has_coordinates().count(),
                }
 
                results.append(summary)

@@ -216,12 +216,12 @@ class TestPlacemark:
         kml_file = KMLFile.from_string(kml_data)
 
         # Get all placemarks with flatten=True
-        all_placemarks = kml_file.placemarks.all(flatten=True)
+        all_placemarks = kml_file.placemarks.all()
         # Should get all 5 placemarks regardless of folder structure
         assert len(all_placemarks) == 5
 
         # Get only placemarks with coordinates using has_coordinates()
-        placemarks_with_coords = kml_file.placemarks.all(flatten=True).has_coordinates()
+        placemarks_with_coords = kml_file.placemarks.all().has_coordinates()
 
         # Should only get the 3 placemarks that have coordinates
         assert len(placemarks_with_coords) == 3
@@ -298,11 +298,11 @@ class TestPlacemark:
         kml_file = KMLFile.from_string(kml_data)
 
         # Test that flatten=True gets all placemarks regardless of nesting
-        all_placemarks = kml_file.placemarks.all(flatten=True)
+        all_placemarks = kml_file.placemarks.all()
         assert len(all_placemarks) == 6  # All placemarks across all folder levels
 
         # Test has_coordinates() filtering
-        placemarks_with_coords = kml_file.placemarks.all(flatten=True).has_coordinates()
+        placemarks_with_coords = kml_file.placemarks.all().has_coordinates()
         assert len(placemarks_with_coords) == 4  # Only those with coordinates
 
         # Verify the correct placemarks are returned
@@ -316,13 +316,13 @@ class TestPlacemark:
             assert placemark.point is not None
             assert placemark.point.coordinates is not None
 
-    def test_has_coordinates_with_flatten_false_vs_true(self) -> None:
+    def test_has_coordinates_with_children_vs_all(self) -> None:
         """
-        Test the difference between has_coordinates() with flatten=False vs flatten=True.
+        Test the difference between has_coordinates() with .children() vs .all().
 
         This test verifies:
-        - flatten=False only gets placemarks at the root level
-        - flatten=True gets placemarks from all folder levels
+        - .children() only gets placemarks at the root level
+        - .all() gets placemarks from all folder levels
         - has_coordinates() works correctly in both scenarios
         """
         kml_data = """<?xml version="1.0" encoding="UTF-8"?>
@@ -357,13 +357,13 @@ class TestPlacemark:
 
         kml_file = KMLFile.from_string(kml_data)
 
-        # Test without flatten (default flatten=False)
-        root_placemarks_with_coords = kml_file.placemarks.has_coordinates()
+        # Test with .children() (only root level)
+        root_placemarks_with_coords = kml_file.placemarks.children().has_coordinates()
         assert len(root_placemarks_with_coords) == 1  # Only root level with coordinates
         assert root_placemarks_with_coords[0].name == "Root With Coords"
 
-        # Test with flatten=True
-        all_placemarks_with_coords = kml_file.placemarks.all(flatten=True).has_coordinates()
+        # Test with .all() (includes nested)
+        all_placemarks_with_coords = kml_file.placemarks.all().has_coordinates()
         assert len(all_placemarks_with_coords) == 2  # Both root and folder level with coordinates
 
         names_with_coords = {p.name for p in all_placemarks_with_coords}

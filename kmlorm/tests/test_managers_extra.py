@@ -135,7 +135,7 @@ class TestManagersExtra:
         p = Point(id="p", coordinates=(0.0, 0.0))
         mgr.add(p)
         # no folders manager set
-        res = mgr.all(flatten=True)
+        res = mgr.all()
         assert res.elements == mgr.get_queryset().elements
 
     def test_get_or_create_handles_multiple_elements(self) -> None:
