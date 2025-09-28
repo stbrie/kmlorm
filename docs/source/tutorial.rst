@@ -131,6 +131,45 @@ children only.
    direct_folders = supply_folder.folders.children()  # Only direct subfolders
    all_folders = supply_folder.folders.all()  # All nested folders at any depth
 
+Geometry Collection Behavior
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.1.0
+
+   Geometry managers (points, paths, polygons) now collect from all sources
+   including Placemarks and MultiGeometry containers.
+
+When using ``.all()`` on geometry managers, the collection includes:
+
+.. code-block:: python
+
+   # Example KML structure with various geometry locations
+   kml_content = '''
+   <kml>
+     <Document>
+       <Point><coordinates>0,0,0</coordinates></Point>  <!-- Standalone Point -->
+       <Placemark>
+         <Point><coordinates>1,1,0</coordinates></Point>  <!-- Point in Placemark -->
+       </Placemark>
+       <Placemark>
+         <MultiGeometry>
+           <Point><coordinates>2,2,0</coordinates></Point>  <!-- Point in MultiGeometry -->
+           <LineString><coordinates>3,3,0 4,4,0</coordinates></LineString>
+         </MultiGeometry>
+       </Placemark>
+     </Document>
+   </kml>
+   '''
+
+   kml = KMLFile.from_string(kml_content)
+
+   # kml.points.children() returns 1 (only the standalone Point)
+   # kml.points.all() returns 3 (standalone + from Placemark + from MultiGeometry)
+
+   # Similarly for paths and polygons
+   # kml.paths.children() returns 0 (no standalone LineStrings)
+   # kml.paths.all() returns 1 (from MultiGeometry)
+
 Spatial Operations
 ------------------
 
@@ -255,8 +294,11 @@ Work with path/route data:
    # Get all paths (direct children only)
    paths = kml.paths.children()
 
-   for path in paths:
-       print(f"Path: {path.name}")
+   # Get ALL paths including those in Placemarks and MultiGeometry
+   all_paths = kml.paths.all()
+
+   for path in all_paths:
+       print(f"Path: {path.name if path.name else 'Unnamed'}")
        if path.coordinates:
            print(f"  Points: {len(path.coordinates)}")
            print(f"  Length: {path.calculate_length():.2f} km")
@@ -271,8 +313,11 @@ Work with polygon areas:
    # Get all polygons (direct children only)
    polygons = kml.polygons.children()
 
-   for polygon in polygons:
-       print(f"Polygon: {polygon.name}")
+   # Get ALL polygons including those in Placemarks and MultiGeometry
+   all_polygons = kml.polygons.all()
+
+   for polygon in all_polygons:
+       print(f"Polygon: {polygon.name if polygon.name else 'Unnamed'}")
        if polygon.outer_boundary:
            print(f"  Boundary points: {len(polygon.outer_boundary)}")
            print(f"  Has holes: {len(polygon.inner_boundaries) > 0}")

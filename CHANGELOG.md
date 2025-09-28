@@ -5,7 +5,7 @@ All notable changes to the KML ORM project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] 2025-09-28
 
 ### Fixed
 
@@ -15,6 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Affects all element types: placemarks, folders, paths, polygons, points, multigeometries
   - This fix makes the API work as documented and intended
   - Updated documentation examples in tutorial.rst and KML_ORM_SPECIFICATION.md to reflect correct behavior
+
+- **Geometry collection includes all sources** - Fixed geometry managers (Points, Paths, Polygons) to collect from all sources
+  - `.all()` on geometry managers now collects from:
+    - Standalone geometry elements at any level
+    - Geometries within Placemarks (e.g., `placemark.point`, LineStrings that become Paths)
+    - Geometries within MultiGeometry containers (both standalone and in Placemarks)
+  - Example: `kml.points.all()` returns ALL Points including those from root-level Placemarks
+  - Example: `folder.paths.all()` returns ALL Paths including those from Placemarks with LineStrings
+  - Added support for parsing standalone Point/MultiGeometry elements directly in folders
+  - All geometry types (Points, Paths, Polygons) now have consistent collection behavior
+
+- **Renamed internal method for clarity** - Renamed `_collect_folder_elements` to `_collect_nested_elements`
+  - More semantically accurate name reflecting that it collects from any nested containers
+  - Allows subclasses to override for custom collection behavior
 
 ## [1.0.1] - 2025-09-28
 

@@ -229,18 +229,20 @@ class TestAPIFunctionality:
             assert type(children_result).__name__ == "KMLQuerySet"
 
     def test_managers_without_folders_manager(self) -> None:
-        """Test managers that don't have folder traversal capability."""
+        """Test that geometry managers collect from all sources."""
         kml = KMLFile.from_string(COMPLEX_KML_DATA)
 
-        # Point manager typically doesn't have _folders_manager
+        # Point manager collects from root and nested placemarks
         points_all = kml.points.all()
         points_children = kml.points.children()
 
         # Both should work without errors
         assert isinstance(points_all, type(points_children))
 
-        # For managers without folders, all() and children() should behave the same
-        assert len(points_all) == len(points_children)
+        # all() should collect Points from Placemarks (root + nested)
+        # children() should only return standalone Points (none in this KML)
+        assert len(points_children) == 0  # No standalone Points
+        assert len(points_all) == 5  # 2 root + 3 nested Placemark Points
 
     def test_deep_nesting_performance(self) -> None:
         """Test performance with deeply nested structures."""

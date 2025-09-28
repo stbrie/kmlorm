@@ -537,6 +537,24 @@ class XMLKMLParser:
                 if polygon:
                     folder.polygons.add(polygon)
 
+            elif child_elem.tag.endswith("}Point") or child_elem.tag == "Point":
+                # Standalone Point (not in Placemark)
+                point = self._create_point_from_element(child_elem)
+                if point:
+                    folder.points.add(point)
+
+            elif child_elem.tag.endswith("}MultiGeometry") or child_elem.tag == "MultiGeometry":
+                # Standalone MultiGeometry (not in Placemark)
+                multigeom = self._create_multigeometry_from_element(child_elem)
+                if multigeom:
+                    # Add the MultiGeometry's contained geometries to the folder
+                    for point in multigeom.get_points():
+                        folder.points.add(point)
+                    for path in multigeom.get_paths():
+                        folder.paths.add(path)
+                    for polygon in multigeom.get_polygons():
+                        folder.polygons.add(polygon)
+
     def _create_path_from_placemark(
         self, placemark_elem: Any, linestring_elem: Any
     ) -> Optional[Path]:

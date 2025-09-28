@@ -56,6 +56,11 @@ class KMLFile:
         self.points = PointManager(folders_manager=self.folders)
         self.multigeometries = MultiGeometryManager(folders_manager=self.folders)
 
+        # Give geometry managers access to placemarks for complete collection
+        self.points._placemarks_manager = self.placemarks
+        self.paths._placemarks_manager = self.placemarks
+        self.polygons._placemarks_manager = self.placemarks
+
         # Document metadata
         self._document_name: Optional[str] = None
         self._document_description: Optional[str] = None

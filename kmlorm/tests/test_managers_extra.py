@@ -121,7 +121,7 @@ class TestManagersExtra:
         folders_manager._elements = [top]
         mgr._folders_manager = folders_manager
 
-        collected = mgr._collect_folder_elements()
+        collected = mgr._collect_nested_elements()
         assert any(isinstance(x, Point) and x.id == "deep" for x in collected)
 
     def test_all_flatten_without_folders_manager_returns_queryset(self) -> None:

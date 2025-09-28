@@ -96,6 +96,11 @@ Once loaded, use Django-style managers to access different element types:
    all_points = kml.points.all()
    all_multigeometries = kml.multigeometries.all()
 
+   # Note: For geometry elements (points, paths, polygons), .all() collects from:
+   # - Standalone geometries at any level
+   # - Geometries within Placemarks (e.g., placemark.point)
+   # - Geometries within MultiGeometry containers
+
 **KML Structure Example:**
 
 .. code-block:: xml

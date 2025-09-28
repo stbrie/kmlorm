@@ -74,6 +74,10 @@ Each manager supports the full range of Django-style query methods including ``.
    all_points = kml.points.all()
    all_multigeometries = kml.multigeometries.all()
 
+   # Note: For geometry elements (points, paths, polygons), .all() also collects from:
+   # - Placemarks at root level and in all nested folders
+   # - MultiGeometry containers (both standalone and within Placemarks)
+
 Document Properties
 -------------------
 

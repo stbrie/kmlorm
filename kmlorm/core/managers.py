@@ -43,6 +43,8 @@ class KMLManager(Generic[T]):
         self._elements: List[T] = []
         self._model_class: Optional[type] = None
         self._folders_manager = folders_manager
+        # Set by KMLFile for geometry managers to access root placemarks
+        self._placemarks_manager: Optional["KMLManager[Any]"] = None
 
     @property
     def elements(self) -> List[T]:
@@ -116,24 +118,24 @@ class KMLManager(Generic[T]):
 
         # If we have a folders manager (KML root case), use the existing logic
         if self._folders_manager:
-            all_elements.extend(self._collect_folder_elements())
-        # If we have a parent (folder case), collect from nested folders
+            all_elements.extend(self._collect_nested_elements())
+        # If we have a parent (folder case), collect from nested containers
         elif (
             hasattr(self, "_parent")
             and getattr(self, "_parent", None)
             and hasattr(getattr(self, "_parent"), "folders")
         ):
-            all_elements.extend(self._collect_from_parent_folders())
+            all_elements.extend(self._collect_from_parent_containers())
 
         # Deduplicate elements
         return self._deduplicate_elements(all_elements)
 
-    def _collect_from_parent_folders(self) -> List[T]:
+    def _collect_from_parent_containers(self) -> List[T]:
         """
-        Collect elements from parent's nested folders.
+        Collect elements from parent's nested containers (folders, etc.).
 
         Returns:
-            List of elements from nested folders
+            List of elements from nested containers
         """
         elements: List[T] = []
         attribute_name = self._get_manager_attribute_name()
@@ -213,12 +215,16 @@ class KMLManager(Generic[T]):
         """
         return self.get_queryset()
 
-    def _collect_folder_elements(self) -> List[T]:
+    def _collect_nested_elements(self) -> List[T]:
         """
-        Recursively collect elements of this manager's type from all folders.
+        Recursively collect elements of this manager's type from nested containers.
+
+        This method collects elements from folders and other containers in the
+        hierarchy. Subclasses can override this to customize collection behavior
+        (e.g., PointManager collecting Points from both folders and Placemarks).
 
         Returns:
-            List of elements found in folders
+            List of elements found in nested containers
         """
         # Ensure model_class is set for specialized managers
         if hasattr(self, "_set_model_class") and callable(getattr(self, "_set_model_class")):
@@ -266,6 +272,54 @@ class KMLManager(Generic[T]):
                             elements.extend(list(nested_manager.children()))
 
         return elements
+
+    def _collect_from_placemarks_and_multigeometries(
+        self, placemarks: "KMLQuerySet[Any]", geometry_type: str
+    ) -> List[T]:
+        """
+        Helper method to collect geometries from Placemarks and their MultiGeometries.
+
+        This method extracts geometries of a specific type from:
+        1. Direct geometry properties on Placemarks (e.g., placemark.point)
+        2. MultiGeometry containers within Placemarks
+
+        Args:
+            placemarks: QuerySet of Placemark objects to search
+            geometry_type: Type of geometry to collect ('points', 'paths', 'polygons')
+
+        Returns:
+            List of geometry objects of the specified type
+        """
+        geometries: List[T] = []
+
+        # Map geometry types to Placemark attributes and MultiGeometry methods
+        geometry_mappings = {
+            "points": ("point", "get_points"),
+            "paths": ("path", "get_paths"),
+            "polygons": ("polygon", "get_polygons"),
+        }
+
+        if geometry_type not in geometry_mappings:
+            return geometries
+
+        attr_name, multigeom_method = geometry_mappings[geometry_type]
+
+        for placemark in placemarks:
+            # Check for direct geometry property
+            if hasattr(placemark, attr_name):
+                geometry = getattr(placemark, attr_name, None)
+                if geometry:
+                    geometries.append(geometry)
+
+            # Check for MultiGeometry containing this geometry type
+            if hasattr(placemark, "multigeometry") and placemark.multigeometry:
+                getter = getattr(placemark.multigeometry, multigeom_method, None)
+                if getter and callable(getter):
+                    result = getter()
+                    if isinstance(result, list):
+                        geometries.extend(result)
+
+        return geometries
 
     def _get_manager_attribute_name(self) -> Optional[str]:
         """
@@ -648,6 +702,41 @@ class PathManager(KMLManager["Path"]):
         self._set_model_class()
         return super().create(**kwargs)
 
+    def _collect_nested_elements(self) -> List["Path"]:
+        """
+        Override to collect Paths from ALL sources at root level.
+
+        Paths can exist as:
+        1. Direct children of folders (standalone LineStrings)
+        2. Inside Placemarks (as LineString elements that become Paths)
+        3. Inside MultiGeometry (both standalone and in Placemarks)
+
+        Returns:
+            List of all Paths found in nested containers
+        """
+        # First get Paths using the base implementation (standalone Paths in folders)
+        paths = super()._collect_nested_elements()
+
+        # Collect from root-level placemarks if available
+        if hasattr(self, "_placemarks_manager") and self._placemarks_manager:
+            paths.extend(
+                self._collect_from_placemarks_and_multigeometries(
+                    self._placemarks_manager.all(), "paths"
+                )
+            )
+
+        # For PathManager at root level, collect from all folders' placemarks
+        if self._folders_manager:
+            for folder in self._folders_manager.all():
+                if hasattr(folder, "placemarks"):
+                    paths.extend(
+                        self._collect_from_placemarks_and_multigeometries(
+                            folder.placemarks.all(), "paths"
+                        )
+                    )
+
+        return paths
+
 
 class PolygonManager(KMLManager["Polygon"]):
     """
@@ -688,6 +777,41 @@ class PolygonManager(KMLManager["Polygon"]):
         self._set_model_class()
         return super().create(**kwargs)
 
+    def _collect_nested_elements(self) -> List["Polygon"]:
+        """
+        Override to collect Polygons from ALL sources at root level.
+
+        Polygons can exist as:
+        1. Direct children of folders (standalone Polygons)
+        2. Inside Placemarks (as placemark.polygon property)
+        3. Inside MultiGeometry (both standalone and in Placemarks)
+
+        Returns:
+            List of all Polygons found in nested containers
+        """
+        # First get Polygons using the base implementation (standalone Polygons in folders)
+        polygons = super()._collect_nested_elements()
+
+        # Collect from root-level placemarks if available
+        if hasattr(self, "_placemarks_manager") and self._placemarks_manager:
+            polygons.extend(
+                self._collect_from_placemarks_and_multigeometries(
+                    self._placemarks_manager.all(), "polygons"
+                )
+            )
+
+        # For PolygonManager at root level, collect from all folders' placemarks
+        if self._folders_manager:
+            for folder in self._folders_manager.all():
+                if hasattr(folder, "placemarks"):
+                    polygons.extend(
+                        self._collect_from_placemarks_and_multigeometries(
+                            folder.placemarks.all(), "polygons"
+                        )
+                    )
+
+        return polygons
+
 
 class PointManager(KMLManager["Point"]):
     """
@@ -724,6 +848,41 @@ class PointManager(KMLManager["Point"]):
         """
         self._set_model_class()
         return super().create(**kwargs)
+
+    def _collect_nested_elements(self) -> List["Point"]:
+        """
+        Override to collect Points from ALL sources at root level.
+
+        Points can exist as:
+        1. Direct children of folders (standalone Points)
+        2. Inside Placemarks (as placemark.point property)
+        3. Inside MultiGeometry (both standalone and in Placemarks)
+
+        Returns:
+            List of all Points found in nested containers
+        """
+        # First get Points using the base implementation (standalone Points in folders)
+        points = super()._collect_nested_elements()
+
+        # Collect from root-level placemarks if available
+        if hasattr(self, "_placemarks_manager") and self._placemarks_manager:
+            points.extend(
+                self._collect_from_placemarks_and_multigeometries(
+                    self._placemarks_manager.all(), "points"
+                )
+            )
+
+        # For PointManager at root level, collect from all folders' placemarks
+        if self._folders_manager:
+            for folder in self._folders_manager.all():
+                if hasattr(folder, "placemarks"):
+                    points.extend(
+                        self._collect_from_placemarks_and_multigeometries(
+                            folder.placemarks.all(), "points"
+                        )
+                    )
+
+        return points
 
 
 class MultiGeometryManager(KMLManager["MultiGeometry"]):
@@ -927,6 +1086,77 @@ class PathRelatedManager(RelatedManager["Path"]):
         self._set_model_class()
         return super().create(**kwargs)
 
+    def _collect_nested_elements(self) -> List["Path"]:
+        """
+        Override to collect Paths from ALL sources at folder level.
+
+        Paths can exist as:
+        1. Direct children of folders (standalone LineStrings)
+        2. Inside Placemarks (as placemark.path property)
+        3. Inside MultiGeometry (both standalone and in Placemarks)
+
+        Returns:
+            List of all Paths found in nested containers
+        """
+        # First get Paths using the base implementation (standalone Paths in folders)
+        paths = super()._collect_nested_elements()
+
+        # PathRelatedManager is used for folders, so _parent is the folder itself
+        parent = getattr(self, "_parent", None)
+        if parent:
+            # Get Paths from placemarks in this folder (direct children)
+            if hasattr(parent, "placemarks"):
+                paths.extend(
+                    self._collect_from_placemarks_and_multigeometries(
+                        parent.placemarks.children(), "paths"
+                    )
+                )
+
+            # Get Paths from placemarks in nested folders
+            if hasattr(parent, "folders"):
+                for folder in parent.folders.all():
+                    if hasattr(folder, "placemarks"):
+                        paths.extend(
+                            self._collect_from_placemarks_and_multigeometries(
+                                folder.placemarks.all(), "paths"
+                            )
+                        )
+
+        return paths
+
+    def _collect_from_parent_containers(self) -> List["Path"]:
+        """
+        Override to collect Paths from parent's Placemarks as well as folders.
+
+        Returns:
+            List of Paths from parent's nested containers
+        """
+        # Get Paths from folders using base implementation
+        paths = super()._collect_from_parent_containers()
+
+        # Also collect Paths from parent's placemarks
+        parent = getattr(self, "_parent", None)
+        if parent:
+            # Get Paths from direct placemarks in parent
+            if hasattr(parent, "placemarks"):
+                paths.extend(
+                    self._collect_from_placemarks_and_multigeometries(
+                        parent.placemarks.children(), "paths"
+                    )
+                )
+
+            # Get Paths from placemarks in nested folders
+            if hasattr(parent, "folders"):
+                for folder in parent.folders.all():
+                    if hasattr(folder, "placemarks"):
+                        paths.extend(
+                            self._collect_from_placemarks_and_multigeometries(
+                                folder.placemarks.all(), "paths"
+                            )
+                        )
+
+        return paths
+
 
 class PolygonRelatedManager(RelatedManager["Polygon"]):
     """
@@ -960,6 +1190,77 @@ class PolygonRelatedManager(RelatedManager["Polygon"]):
         self._set_model_class()
         return super().create(**kwargs)
 
+    def _collect_nested_elements(self) -> List["Polygon"]:
+        """
+        Override to collect Polygons from ALL sources at folder level.
+
+        Polygons can exist as:
+        1. Direct children of folders (standalone Polygons)
+        2. Inside Placemarks (as placemark.polygon property)
+        3. Inside MultiGeometry (both standalone and in Placemarks)
+
+        Returns:
+            List of all Polygons found in nested containers
+        """
+        # First get Polygons using the base implementation (standalone Polygons in folders)
+        polygons = super()._collect_nested_elements()
+
+        # PolygonRelatedManager is used for folders, so _parent is the folder itself
+        parent = getattr(self, "_parent", None)
+        if parent:
+            # Get Polygons from placemarks in this folder (direct children)
+            if hasattr(parent, "placemarks"):
+                polygons.extend(
+                    self._collect_from_placemarks_and_multigeometries(
+                        parent.placemarks.children(), "polygons"
+                    )
+                )
+
+            # Get Polygons from placemarks in nested folders
+            if hasattr(parent, "folders"):
+                for folder in parent.folders.all():
+                    if hasattr(folder, "placemarks"):
+                        polygons.extend(
+                            self._collect_from_placemarks_and_multigeometries(
+                                folder.placemarks.all(), "polygons"
+                            )
+                        )
+
+        return polygons
+
+    def _collect_from_parent_containers(self) -> List["Polygon"]:
+        """
+        Override to collect Polygons from parent's Placemarks as well as folders.
+
+        Returns:
+            List of Polygons from parent's nested containers
+        """
+        # Get Polygons from folders using base implementation
+        polygons = super()._collect_from_parent_containers()
+
+        # Also collect Polygons from parent's placemarks
+        parent = getattr(self, "_parent", None)
+        if parent:
+            # Get Polygons from direct placemarks in parent
+            if hasattr(parent, "placemarks"):
+                polygons.extend(
+                    self._collect_from_placemarks_and_multigeometries(
+                        parent.placemarks.children(), "polygons"
+                    )
+                )
+
+            # Get Polygons from placemarks in nested folders
+            if hasattr(parent, "folders"):
+                for folder in parent.folders.all():
+                    if hasattr(folder, "placemarks"):
+                        polygons.extend(
+                            self._collect_from_placemarks_and_multigeometries(
+                                folder.placemarks.all(), "polygons"
+                            )
+                        )
+
+        return polygons
+
 
 class PointRelatedManager(RelatedManager["Point"]):
     """
@@ -992,6 +1293,77 @@ class PointRelatedManager(RelatedManager["Point"]):
         """
         self._set_model_class()
         return super().create(**kwargs)
+
+    def _collect_nested_elements(self) -> List["Point"]:
+        """
+        Override to collect Points from ALL sources at folder level.
+
+        Points can exist as:
+        1. Direct children of folders (standalone Points)
+        2. Inside Placemarks (as placemark.point property)
+        3. Inside MultiGeometry (both standalone and in Placemarks)
+
+        Returns:
+            List of all Points found in nested containers
+        """
+        # First get Points using the base implementation (standalone Points in folders)
+        points = super()._collect_nested_elements()
+
+        # PointRelatedManager is used for folders, so _parent is the folder itself
+        parent = getattr(self, "_parent", None)
+        if parent:
+            # Get Points from placemarks in this folder (direct children)
+            if hasattr(parent, "placemarks"):
+                points.extend(
+                    self._collect_from_placemarks_and_multigeometries(
+                        parent.placemarks.children(), "points"
+                    )
+                )
+
+            # Get Points from placemarks in nested folders
+            if hasattr(parent, "folders"):
+                for folder in parent.folders.all():
+                    if hasattr(folder, "placemarks"):
+                        points.extend(
+                            self._collect_from_placemarks_and_multigeometries(
+                                folder.placemarks.all(), "points"
+                            )
+                        )
+
+        return points
+
+    def _collect_from_parent_containers(self) -> List["Point"]:
+        """
+        Override to collect Points from parent's Placemarks as well as folders.
+
+        Returns:
+            List of Points from parent's nested containers
+        """
+        # Get Points from folders using base implementation
+        points = super()._collect_from_parent_containers()
+
+        # Also collect Points from parent's placemarks
+        parent = getattr(self, "_parent", None)
+        if parent:
+            # Get Points from direct placemarks in parent
+            if hasattr(parent, "placemarks"):
+                points.extend(
+                    self._collect_from_placemarks_and_multigeometries(
+                        parent.placemarks.children(), "points"
+                    )
+                )
+
+            # Get Points from placemarks in nested folders
+            if hasattr(parent, "folders"):
+                for folder in parent.folders.all():
+                    if hasattr(folder, "placemarks"):
+                        points.extend(
+                            self._collect_from_placemarks_and_multigeometries(
+                                folder.placemarks.all(), "points"
+                            )
+                        )
+
+        return points
 
 
 class MultiGeometryRelatedManager(RelatedManager["MultiGeometry"]):

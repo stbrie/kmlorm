@@ -394,31 +394,37 @@ class TestRecursiveAllBehavior:
             f"got {len(folders)}"
         )
 
-    def test_points_collection_from_folder(self) -> None:
+    def test_points_collection_from_folder_all_sources(self) -> None:
         """
-        Test that folder.points.all() returns all Points in nested placemarks.
+        Test that folder.points.all() returns ALL Points from all sources.
 
-        EXPECTED: Should return all Point objects from all placemarks in the
-        folder tree, not just direct children.
+        Points can exist as:
+        1. Standalone Points directly in folders
+        2. Points inside Placemarks
+
+        EXPECTED: folder.points.all() should return ALL Points from both sources.
         """
         kml_content = """<?xml version="1.0" encoding="UTF-8"?>
         <kml xmlns="http://www.opengis.net/kml/2.2">
             <Document>
                 <Folder>
                     <name>Region</name>
+                    <!-- Standalone point directly in folder -->
+                    <Point><coordinates>1,1,0</coordinates></Point>
+                    <!-- Placemark with a Point -->
                     <Placemark>
-                        <name>P1</name>
-                        <Point><coordinates>1,1,0</coordinates></Point>
+                        <name>Place1</name>
+                        <Point><coordinates>4,4,0</coordinates></Point>
                     </Placemark>
                     <Folder>
                         <name>SubRegion</name>
+                        <!-- More standalone points in nested folder -->
+                        <Point><coordinates>2,2,0</coordinates></Point>
+                        <Point><coordinates>3,3,0</coordinates></Point>
+                        <!-- Placemark with Point in nested folder -->
                         <Placemark>
-                            <name>P2</name>
-                            <Point><coordinates>2,2,0</coordinates></Point>
-                        </Placemark>
-                        <Placemark>
-                            <name>P3</name>
-                            <Point><coordinates>3,3,0</coordinates></Point>
+                            <name>Place2</name>
+                            <Point><coordinates>5,5,0</coordinates></Point>
                         </Placemark>
                     </Folder>
                 </Folder>
@@ -428,16 +434,18 @@ class TestRecursiveAllBehavior:
         kml = KMLFile.from_string(kml_content)
         region = kml.folders.get(name="Region")
 
-        # Get all points from the region folder
+        # Get ALL points from the region folder (standalone + from placemarks)
         all_points = region.points.all()
 
-        # EXPECTED: Should get all 3 points, not just the 1 direct child
-        assert len(all_points) == 3, (
-            f"Expected 3 points under Region folder, got {len(all_points)}"
+        # EXPECTED: Should get all 5 points (3 standalone + 2 from placemarks)
+        assert len(all_points) == 5, (
+            f"Expected 5 total points under Region folder, got {len(all_points)}"
         )
 
         # Verify coordinates to ensure we got all points
         coords = [(p.coordinates.longitude, p.coordinates.latitude) for p in all_points if p.coordinates]
-        assert (1, 1) in coords, "Missing point P1"
-        assert (2, 2) in coords, "Missing point P2"
-        assert (3, 3) in coords, "Missing point P3"
+        assert (1, 1) in coords, "Missing standalone point at (1,1)"
+        assert (2, 2) in coords, "Missing standalone point at (2,2)"
+        assert (3, 3) in coords, "Missing standalone point at (3,3)"
+        assert (4, 4) in coords, "Missing Point from Place1 at (4,4)"
+        assert (5, 5) in coords, "Missing Point from Place2 at (5,5)"
