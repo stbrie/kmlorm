@@ -10,8 +10,9 @@ These tests ensure that folder.points.all(), folder.paths.all(), etc. return ALL
 instances of those geometry types regardless of how deeply nested they are.
 """
 
+# pylint: disable=duplicate-code
 import pytest
-from kmlorm import KMLFile, Point, Path, Polygon
+from kmlorm import KMLFile
 
 
 class TestGeometryRecursiveCollection:
@@ -19,6 +20,7 @@ class TestGeometryRecursiveCollection:
 
     @pytest.fixture
     def comprehensive_kml(self) -> KMLFile:
+        # pylint: disable=line-too-long
         """Create a KML with all possible geometry nesting scenarios."""
         kml_content = """<?xml version="1.0" encoding="UTF-8"?>
         <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -68,7 +70,9 @@ class TestGeometryRecursiveCollection:
                         <Polygon>
                             <outerBoundaryIs>
                                 <LinearRing>
-                                    <coordinates>20,20,0 21,20,0 21,21,0 20,21,0 20,20,0</coordinates>
+                                    <coordinates>
+                                        20,20,0 21,20,0 21,21,0 20,21,0 20,20,0
+                                    </coordinates>
                                 </LinearRing>
                             </outerBoundaryIs>
                         </Polygon>
@@ -84,7 +88,9 @@ class TestGeometryRecursiveCollection:
                             <Polygon>
                                 <outerBoundaryIs>
                                     <LinearRing>
-                                        <coordinates>30,30,0 31,30,0 31,31,0 30,31,0 30,30,0</coordinates>
+                                        <coordinates>
+                                            30,30,0 31,30,0 31,31,0 30,31,0 30,30,0
+                                        </coordinates>
                                     </LinearRing>
                                 </outerBoundaryIs>
                             </Polygon>
@@ -101,7 +107,9 @@ class TestGeometryRecursiveCollection:
                         <Polygon>
                             <outerBoundaryIs>
                                 <LinearRing>
-                                    <coordinates>40,40,0 41,40,0 41,41,0 40,41,0 40,40,0</coordinates>
+                                    <coordinates>
+                                        40,40,0 41,40,0 41,41,0 40,41,0 40,40,0
+                                    </coordinates>
                                 </LinearRing>
                             </outerBoundaryIs>
                         </Polygon>
@@ -120,7 +128,9 @@ class TestGeometryRecursiveCollection:
                                 <name>Deep PM</name>
                                 <MultiGeometry>
                                     <Point><coordinates>70,70,0</coordinates></Point>
-                                    <LineString><coordinates>70,70,0 71,70,0</coordinates></LineString>
+                                    <LineString>
+                                        <coordinates>70,70,0 71,70,0</coordinates>
+                                    </LineString>
                                 </MultiGeometry>
                             </Placemark>
                         </Folder>
@@ -142,8 +152,9 @@ class TestGeometryRecursiveCollection:
         all_points = test_folder.points.all()
 
         # Get coordinates for easier checking
-        coords = {(p.coordinates.longitude, p.coordinates.latitude)
-                 for p in all_points if p.coordinates}
+        coords = {
+            (p.coordinates.longitude, p.coordinates.latitude) for p in all_points if p.coordinates
+        }
 
         # Expected Points:
         # - Standalone in TestFolder: (10,10)
@@ -154,14 +165,14 @@ class TestGeometryRecursiveCollection:
         # - Standalone in DeeplyNestedFolder: (60,60)
         # - In "Deep PM" MultiGeometry: (70,70)
         expected_coords = {
-            (10, 10),  # Standalone in TestFolder
-            (20, 20),  # PM with Point
-            (30, 30),  # PM with MultiGeometry - point 1
-            (31, 31),  # PM with MultiGeometry - point 2
-            (40, 40),  # Standalone in NestedFolder
-            (50, 50),  # Nested PM
-            (60, 60),  # Standalone in DeeplyNestedFolder
-            (70, 70),  # Deep PM MultiGeometry
+            (10.0, 10.0),  # Standalone in TestFolder
+            (20.0, 20.0),  # PM with Point
+            (30.0, 30.0),  # PM with MultiGeometry - point 1
+            (31.0, 31.0),  # PM with MultiGeometry - point 2
+            (40.0, 40.0),  # Standalone in NestedFolder
+            (50.0, 50.0),  # Nested PM
+            (60.0, 60.0),  # Standalone in DeeplyNestedFolder
+            (70.0, 70.0),  # Deep PM MultiGeometry
         }
 
         assert coords == expected_coords, (
@@ -195,11 +206,11 @@ class TestGeometryRecursiveCollection:
         # - Standalone in NestedFolder: starts at (40,40)
         # - In "Deep PM" MultiGeometry: starts at (70,70)
         expected_starts = {
-            (10, 10),  # Standalone in TestFolder
-            (20, 20),  # PM with LineString
-            (30, 30),  # PM with MultiGeometry
-            (40, 40),  # Standalone in NestedFolder
-            (70, 70),  # Deep PM MultiGeometry
+            (10.0, 10.0),  # Standalone in TestFolder
+            (20.0, 20.0),  # PM with LineString
+            (30.0, 30.0),  # PM with MultiGeometry
+            (40.0, 40.0),  # Standalone in NestedFolder
+            (70.0, 70.0),  # Deep PM MultiGeometry
         }
 
         path_starts_set = set(path_starts)
@@ -233,10 +244,10 @@ class TestGeometryRecursiveCollection:
         # - In "PM with MultiGeometry": starts at (30,30)
         # - Standalone in NestedFolder: starts at (40,40)
         expected_starts = {
-            (10, 10),  # Standalone in TestFolder
-            (20, 20),  # PM with Polygon
-            (30, 30),  # PM with MultiGeometry
-            (40, 40),  # Standalone in NestedFolder
+            (10.0, 10.0),  # Standalone in TestFolder
+            (20.0, 20.0),  # PM with Polygon
+            (30.0, 30.0),  # PM with MultiGeometry
+            (40.0, 40.0),  # Standalone in NestedFolder
         }
 
         polygon_starts_set = set(polygon_starts)
@@ -259,9 +270,10 @@ class TestGeometryRecursiveCollection:
         assert len(root_polygons) >= 1, "Should have at least root polygon"
 
         # Check root point
-        root_point_coords = [(p.coordinates.longitude, p.coordinates.latitude)
-                            for p in root_points if p.coordinates]
-        assert (0, 0) in root_point_coords, "Root point at (0,0) not found"
+        root_point_coords = [
+            (p.coordinates.longitude, p.coordinates.latitude) for p in root_points if p.coordinates
+        ]
+        assert (0.0, 0.0) in root_point_coords, "Root point at (0,0) not found"
 
     def test_empty_folders_return_empty_collections(self) -> None:
         """Test that folders with no geometries return empty collections."""
@@ -285,22 +297,22 @@ class TestGeometryRecursiveCollection:
         assert len(empty_folder.polygons.all()) == 0
         assert len(empty_folder.placemarks.all()) == 0
 
-    @pytest.mark.parametrize("geometry_type,expected_count", [
-        ("points", 8),
-        ("paths", 5),
-        ("polygons", 4),
-    ])
+    @pytest.mark.parametrize(
+        "geometry_type,expected_count",
+        [
+            ("points", 8),
+            ("paths", 5),
+            ("polygons", 4),
+        ],
+    )
     def test_parametrized_geometry_counts(
-        self,
-        comprehensive_kml: KMLFile,
-        geometry_type: str,
-        expected_count: int
+        self, comprehensive_kml: KMLFile, geometry_type: str, expected_count: int
     ) -> None:
         """Parametrized test for different geometry type counts."""
         test_folder = comprehensive_kml.folders.get(name="TestFolder")
         manager = getattr(test_folder, geometry_type)
         all_elements = manager.all()
 
-        assert len(all_elements) == expected_count, (
-            f"Expected {expected_count} {geometry_type}, got {len(all_elements)}"
-        )
+        assert (
+            len(all_elements) == expected_count
+        ), f"Expected {expected_count} {geometry_type}, got {len(all_elements)}"

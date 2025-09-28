@@ -338,7 +338,6 @@ class TestExamplesDocumentation:
                 # Coordinates should be in the dict (even if as an object)
                 assert placemark_dict['coordinates'] is not None
 
-
     def test_spatial_analysis_clusters(self) -> None:
         """Test spatial clustering analysis example."""
         # From examples.rst: Spatial Analysis section

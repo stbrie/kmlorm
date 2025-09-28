@@ -30,6 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - More semantically accurate name reflecting that it collects from any nested containers
   - Allows subclasses to override for custom collection behavior
 
+### Added
+
+- **Comprehensive test coverage for spatial calculations** - Added extensive tests for spatial calculation methods
+  - Created `test_spatial_interpolation.py` with 29 tests covering interpolation and bounding box calculations
+  - Created `test_spatial_distances_to_many.py` with 14 tests for bulk distance calculations
+  - Improved test coverage for `kmlorm/spatial/calculations.py` from ~46% to 77%
+  - Tests cover edge cases, None handling, various input types, and real-world scenarios
+  - All spatial calculation methods (`interpolate`, `bounding_box`, `distances_to_many`) now thoroughly tested
+
 ## [1.0.1] - 2025-09-28
 
 ### Major Release - Production Ready

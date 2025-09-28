@@ -112,14 +112,14 @@ class TestRecursiveAllBehavior:
 
         # EXPECTED: Should return ALL placemarks under North America
         expected_names = [
-            "NA Office",           # Direct child of North America
-            "NYC Store",           # In USA folder
-            "LA Store",            # In USA folder
-            "SF Store",            # In USA/California folder (nested)
-            "SD Store",            # In USA/California folder (nested)
-            "Albany Store",        # In USA/New York folder (nested)
-            "Toronto Store",       # In Canada folder
-            "Vancouver Store",     # In Canada folder
+            "NA Office",  # Direct child of North America
+            "NYC Store",  # In USA folder
+            "LA Store",  # In USA folder
+            "SF Store",  # In USA/California folder (nested)
+            "SD Store",  # In USA/California folder (nested)
+            "Albany Store",  # In USA/New York folder (nested)
+            "Toronto Store",  # In Canada folder
+            "Vancouver Store",  # In Canada folder
         ]
 
         assert len(all_placemarks) == 8, (
@@ -149,15 +149,14 @@ class TestRecursiveAllBehavior:
 
         # EXPECTED: Should return ALL folders under North America
         expected_names = [
-            "USA",          # Direct child
-            "Canada",       # Direct child
-            "California",   # Nested in USA
-            "New York",     # Nested in USA
+            "USA",  # Direct child
+            "Canada",  # Direct child
+            "California",  # Nested in USA
+            "New York",  # Nested in USA
         ]
 
         assert len(all_folders) == 4, (
-            f"Expected 4 folders under North America, got {len(all_folders)}: "
-            f"{folder_names}"
+            f"Expected 4 folders under North America, got {len(all_folders)}: " f"{folder_names}"
         )
 
         for expected_name in expected_names:
@@ -183,16 +182,15 @@ class TestRecursiveAllBehavior:
 
         # EXPECTED: Should include placemarks from USA and all state subfolders
         expected_names = [
-            "NYC Store",        # Direct child of USA
-            "LA Store",         # Direct child of USA
-            "SF Store",         # In California subfolder
-            "SD Store",         # In California subfolder
-            "Albany Store",     # In New York subfolder
+            "NYC Store",  # Direct child of USA
+            "LA Store",  # Direct child of USA
+            "SF Store",  # In California subfolder
+            "SD Store",  # In California subfolder
+            "Albany Store",  # In New York subfolder
         ]
 
         assert len(usa_placemarks) == 5, (
-            f"Expected 5 placemarks under USA, got {len(usa_placemarks)}: "
-            f"{placemark_names}"
+            f"Expected 5 placemarks under USA, got {len(usa_placemarks)}: " f"{placemark_names}"
         )
 
         for expected_name in expected_names:
@@ -287,9 +285,7 @@ class TestRecursiveAllBehavior:
 
         # Get all placemarks (should include nested ones)
         all_placemarks = mixed_folder.placemarks.all()
-        assert len(all_placemarks) == 4, (
-            f"Expected 4 placemarks total, got {len(all_placemarks)}"
-        )
+        assert len(all_placemarks) == 4, f"Expected 4 placemarks total, got {len(all_placemarks)}"
 
         # Check that we got all placemarks including nested ones
         placemark_names = [p.name for p in all_placemarks]
@@ -315,9 +311,9 @@ class TestRecursiveAllBehavior:
 
         # .all() should return ALL placemarks including nested
         all_placemarks = na_folder.placemarks.all()
-        assert len(all_placemarks) == 8, (
-            f"Expected 8 total placemarks under North America, got {len(all_placemarks)}"
-        )
+        assert (
+            len(all_placemarks) == 8
+        ), f"Expected 8 total placemarks under North America, got {len(all_placemarks)}"
 
     def test_recursive_collection_from_different_levels(self, nested_kml: KMLFile) -> None:
         """
@@ -345,19 +341,22 @@ class TestRecursiveAllBehavior:
         ca_placemarks = california_folder.placemarks.all()
         assert len(ca_placemarks) == 2, "Expected 2 placemarks under California"
 
-    @pytest.mark.parametrize("folder_name,expected_placemark_count,expected_folder_count", [
-        ("North America", 8, 4),  # NA has 8 placemarks, 4 subfolders total
-        ("USA", 5, 2),            # USA has 5 placemarks, 2 state subfolders
-        ("Canada", 2, 0),         # Canada has 2 placemarks, no subfolders
-        ("California", 2, 0),     # California has 2 placemarks, no subfolders
-        ("Europe", 2, 1),         # Europe has 2 placemarks, 1 subfolder (UK)
-    ])
+    @pytest.mark.parametrize(
+        "folder_name,expected_placemark_count,expected_folder_count",
+        [
+            ("North America", 8, 4),  # NA has 8 placemarks, 4 subfolders total
+            ("USA", 5, 2),  # USA has 5 placemarks, 2 state subfolders
+            ("Canada", 2, 0),  # Canada has 2 placemarks, no subfolders
+            ("California", 2, 0),  # California has 2 placemarks, no subfolders
+            ("Europe", 2, 1),  # Europe has 2 placemarks, 1 subfolder (UK)
+        ],
+    )
     def test_parametrized_recursive_counts(
         self,
         nested_kml: KMLFile,
         folder_name: str,
         expected_placemark_count: int,
-        expected_folder_count: int
+        expected_folder_count: int,
     ) -> None:
         """
         Parametrized test to verify recursive counts for various folders.
@@ -438,12 +437,15 @@ class TestRecursiveAllBehavior:
         all_points = region.points.all()
 
         # EXPECTED: Should get all 5 points (3 standalone + 2 from placemarks)
-        assert len(all_points) == 5, (
-            f"Expected 5 total points under Region folder, got {len(all_points)}"
-        )
+        assert (
+            len(all_points) == 5
+        ), f"Expected 5 total points under Region folder, got {len(all_points)}"
 
         # Verify coordinates to ensure we got all points
-        coords = [(p.coordinates.longitude, p.coordinates.latitude) for p in all_points if p.coordinates]
+        coords = [
+            (p.coordinates.longitude, p.coordinates.latitude)
+            for p in all_points if p.coordinates
+        ]
         assert (1, 1) in coords, "Missing standalone point at (1,1)"
         assert (2, 2) in coords, "Missing standalone point at (2,2)"
         assert (3, 3) in coords, "Missing standalone point at (3,3)"
