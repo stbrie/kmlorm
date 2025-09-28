@@ -151,12 +151,12 @@ class KMLFile:
             Combined list of all elements
         """
         elements: List[Any] = []
-        elements.extend(self.placemarks.all())
-        elements.extend(self.folders.all())
-        elements.extend(self.paths.all())
-        elements.extend(self.polygons.all())
-        elements.extend(self.points.all())
-        elements.extend(self.multigeometries.all())
+        elements.extend(self.placemarks.children())
+        elements.extend(self.folders.children())
+        elements.extend(self.paths.children())
+        elements.extend(self.polygons.children())
+        elements.extend(self.points.children())
+        elements.extend(self.multigeometries.children())
         return elements
 
     def element_counts(self) -> Dict[str, int]:

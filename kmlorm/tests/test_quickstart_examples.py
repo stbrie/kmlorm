@@ -399,14 +399,14 @@ class TestQuickstartExamples:
         # Test with the sample.kml fixture that has both root-level and nested placemarks
         kml = KMLFile.from_file(self.places_kml_file)
 
-        # Without flatten=True - should only get placemarks at document root level
-        root_placemarks = kml.placemarks.all()
+        # With .children() - should only get placemarks at document root level
+        root_placemarks = kml.placemarks.children()
         # sample.kml has 1 placemark at root level (Warehouse Distribution Center)
         assert len(root_placemarks) == 1
         assert root_placemarks[0].name == "Warehouse Distribution Center"
 
-        # With flatten=True - should get all placemarks including those in folders
-        all_placemarks = kml.placemarks.all(flatten=True)
+        # With .all() (new default behavior) - should get all placemarks including those in folders
+        all_placemarks = kml.placemarks.all()
         # sample.kml has 1 root + 4 nested = 5 total placemarks
         assert len(all_placemarks) == 5
 
@@ -432,8 +432,8 @@ class TestQuickstartExamples:
 
         kml = KMLFile.from_file(comprehensive_kml_path)
 
-        # Test folders.all() behavior - does it need flatten=True like placemarks?
-        root_folders = kml.folders.all()
+        # Test folders.children() behavior - get only root-level folders
+        root_folders = kml.folders.children()
         root_folder_names = [f.name for f in root_folders]
 
         # Check if flatten=True parameter works for folders
@@ -471,8 +471,8 @@ class TestQuickstartExamples:
             all_folders_flat = root_folders
 
         # With the new FoldersManager implementation:
-        # - folders.all() returns only root-level folders (4)
-        # - folders.all(flatten=True) returns all folders including nested (6: 4 root + 2 nested)
+        # - folders.children() returns only root-level folders (4)
+        # - folders.all() returns all folders including nested (6: 4 root + 2 nested)
         assert len(root_folders) == 4  # Only root-level folders
         if supports_flatten:
             # Now flatten should actually work and return nested folders too

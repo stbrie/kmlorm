@@ -6,8 +6,9 @@ implement the .objects interface and relationship management similar
 to Django's ORM managers.
 """
 
-# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-public-methods, too-many-lines
 from __future__ import annotations
+import warnings
 from typing import TYPE_CHECKING, Any, List, Optional, TypeVar, Generic, cast
 
 
@@ -97,20 +98,57 @@ class KMLManager(Generic[T]):
         """
         return KMLQuerySet(self.elements)
 
-    def all(self, flatten: bool = False) -> "KMLQuerySet[T]":
+    def all(self, flatten: Optional[bool] = None) -> "KMLQuerySet[T]":
         """
-        Return all elements as a QuerySet.
+        Return all elements as a QuerySet, including those in nested folders.
 
         Args:
-            flatten: If True, recursively include elements from nested folders
+            flatten: Deprecated parameter. Use .children() for direct children only.
 
         Returns:
-            QuerySet containing all elements (flattened if requested)
+            QuerySet containing all elements including those in nested folders
+
+        .. deprecated::
+            The flatten parameter is deprecated. Use .children() for direct children
+            or .all() for all elements including nested ones.
+
+        Example:
+            >>> # Preferred new API
+            >>> all_placemarks = kml.placemarks.all()        # All elements everywhere
+            >>> root_placemarks = kml.placemarks.children()  # Direct children only
+            >>>
+            >>> # Deprecated (still works but shows warning)
+            >>> all_placemarks = kml.placemarks.all(flatten=True)   # Deprecated
+            >>> root_placemarks = kml.placemarks.all(flatten=False) # Deprecated
         """
-        if not flatten or not self._folders_manager:
+        # Handle explicit flatten parameter with warnings
+        if flatten is not None:
+
+            if flatten is True:
+                warnings.warn(
+                    "The flatten=True parameter is deprecated and will be "
+                    "removed in a future version. "
+                    "Use .all() instead (new default behavior includes nested elements).",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                # Continue with new behavior (flatten=True is now default)
+            elif flatten is False:
+                warnings.warn(
+                    "The flatten=False parameter is deprecated and will be removed in "
+                    " a future version. "
+                    "Use .children() instead for direct children only.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                # Maintain old behavior during transition to prevent breaking changes
+                return self.get_queryset()  # Return direct children only
+
+        # New default behavior: always include nested elements
+        if not self._folders_manager:
             return self.get_queryset()
 
-        # Collect all elements including those in folders, deduplicated by object id
+        # Implementation of flattening logic
         all_elements = list(self.elements)
         all_elements.extend(self._collect_folder_elements())
         seen_ids = set()
@@ -121,6 +159,29 @@ class KMLManager(Generic[T]):
                 seen_ids.add(el_id)
                 deduped.append(el)
         return KMLQuerySet(deduped)
+
+    def children(self) -> "KMLQuerySet[T]":
+        """
+        Return only direct child elements as a QuerySet.
+
+        This method returns elements that are direct children of the current
+        container, without traversing into nested folders. This provides the
+        same behavior as the current .all() method without the flatten parameter.
+
+        Returns:
+            QuerySet containing only direct child elements
+
+        Example:
+            >>> # Get only placemarks directly in the KML file root
+            >>> root_placemarks = kml_file.placemarks.children()
+            >>>
+            >>> # Get only folders directly in the current folder
+            >>> direct_subfolders = folder.folders.children()
+            >>>
+            >>> # Chain with other QuerySet methods
+            >>> visible_root_placemarks = kml_file.placemarks.children().filter(visibility=True)
+        """
+        return self.get_queryset()
 
     def _collect_folder_elements(self) -> List[T]:
         """
@@ -149,18 +210,18 @@ class KMLManager(Generic[T]):
                 result = [folder]
                 subfolders = getattr(folder, "folders", None)
                 if subfolders:
-                    for subfolder in subfolders.all():
+                    for subfolder in subfolders.children():
                         result.extend(collect_all_folders(subfolder, depth + 1))
                 return result
 
-            for folder in self._folders_manager.all():
+            for folder in self._folders_manager.children():
                 # Debug: starting recursion from root folder can be logged here if needed
                 elements.extend(collect_all_folders(folder))
         else:
-            for folder in self._folders_manager.all():
+            for folder in self._folders_manager.children():
                 folder_manager = getattr(folder, attribute_name, None)
                 if folder_manager:
-                    elements.extend(list(folder_manager.all()))
+                    elements.extend(list(folder_manager.children()))
                 elements.extend(self._collect_elements_from_folder(folder, attribute_name))
 
         return elements
@@ -181,7 +242,7 @@ class KMLManager(Generic[T]):
         if not subfolders:
             return elements
 
-        for subfolder in subfolders.all():
+        for subfolder in subfolders.children():
             if attribute_name == "folders":
                 # For folders, add the subfolder itself
                 elements.append(subfolder)
@@ -190,7 +251,7 @@ class KMLManager(Generic[T]):
             else:
                 subfolder_manager = getattr(subfolder, attribute_name, None)
                 if subfolder_manager:
-                    elements.extend(list(subfolder_manager.all()))
+                    elements.extend(list(subfolder_manager.children()))
                 elements.extend(self._collect_elements_from_folder(subfolder, attribute_name))
         return elements
 

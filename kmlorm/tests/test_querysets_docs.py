@@ -85,7 +85,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the basic QuerySet operations example from documentation."""
         # Example from documentation:
         # kml = KMLFile.from_file('example.kml')
-        # all_placemarks = kml.placemarks.all()
+        # all_placemarks = kml.placemarks.children()  # Direct children only
         # filtered_qs = all_placemarks.filter(visibility=True).order_by('name')
         # for placemark in filtered_qs:
         #     print(f"Placemark: {placemark.name}")
@@ -93,7 +93,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # print(f"Found {visible_count} visible placemarks")
 
         # Get all placemarks (lazy evaluation)
-        all_placemarks = self.kml.placemarks.all()
+        all_placemarks = self.kml.placemarks.children()  # Direct children only
 
         # Chain operations (still lazy)
         filtered_qs = all_placemarks.filter(visibility=True).order_by("name")
@@ -117,11 +117,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_field_lookups_basic_filtering_example(self) -> None:
         """Test the basic filtering example from Field Lookups section."""
         # Example from documentation:
-        # capital_stores = kml.placemarks.all().filter(name__icontains='capital')
-        # visible_elements = kml.placemarks.all().filter(visibility=True)
+        # capital_stores = kml.placemarks.children().filter(name__icontains='capital')
+        # visible_elements = kml.placemarks.children().filter(visibility=True)
 
-        capital_stores = self.kml.placemarks.all().filter(name__icontains="capital")
-        visible_elements = self.kml.placemarks.all().filter(visibility=True)
+        capital_stores = self.kml.placemarks.children().filter(name__icontains="capital")
+        visible_elements = self.kml.placemarks.children().filter(visibility=True)
 
         # Verify filtering works correctly
         self.assertEqual(len(capital_stores), 2)  # Capital Electric, Capital Hardware
@@ -134,12 +134,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_field_lookups_multiple_filters_example(self) -> None:
         """Test the multiple filters example from Field Lookups section."""
         # Example from documentation:
-        # visible_capital = kml.placemarks.all().filter(
+        # visible_capital = kml.placemarks.children().filter(
         #     name__icontains='capital',
         #     visibility=True
         # )
 
-        visible_capital = self.kml.placemarks.all().filter(
+        visible_capital = self.kml.placemarks.children().filter(
             name__icontains="capital", visibility=True
         )
 
@@ -153,9 +153,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_field_lookups_exclusion_example(self) -> None:
         """Test the exclusion example from Field Lookups section."""
         # Example from documentation:
-        # non_capital = kml.placemarks.all().exclude(name__icontains='capital')
+        # non_capital = kml.placemarks.children().exclude(name__icontains='capital')
 
-        non_capital = self.kml.placemarks.all().exclude(name__icontains="capital")
+        non_capital = self.kml.placemarks.children().exclude(name__icontains="capital")
 
         # Verify exclusion works
         self.assertEqual(len(non_capital), 4)  # 6 total - 2 capital = 4
@@ -169,7 +169,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # Test with direct field comparison instead
 
         # Test comparison filtering on a simple field
-        visible_items = self.kml.placemarks.all().filter(visibility=True)
+        visible_items = self.kml.placemarks.children().filter(visibility=True)
 
         # Verify comparison filtering works for basic fields
         self.assertGreater(len(visible_items), 0)
@@ -188,17 +188,17 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
 
         # Test range lookup (though limited to direct fields)
         # Note: This demonstrates the range lookup mechanism even if not on coordinates
-        all_items = self.kml.placemarks.all()
+        all_items = self.kml.placemarks.children()  # Direct children only
         self.assertGreater(len(all_items), 0)
 
     def test_field_lookups_list_membership_example(self) -> None:
         """Test the list membership example from Field Lookups section."""
         # Example from documentation:
-        # specific_names = kml.placemarks.all().filter(
+        # specific_names = kml.placemarks.children().filter(
         #     name__in=['Store A', 'Store B', 'Store C']
         # )
 
-        specific_names = self.kml.placemarks.all().filter(
+        specific_names = self.kml.placemarks.children().filter(
             name__in=["Store A", "Store B", "Store C"]
         )
 
@@ -211,24 +211,25 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_field_lookups_regex_example(self) -> None:
         """Test the regular expressions example from Field Lookups section."""
         # Example from documentation:
-        # phone_numbers = kml.placemarks.all().filter(
+        # phone_numbers = kml.placemarks.children().filter(
         #     description__regex=r'\d{3}-\d{3}-\d{4}'
         # )
 
-        phone_numbers = self.kml.placemarks.all().filter(description__regex=r"\d{3}-\d{3}-\d{4}")
+        regex = r"\d{3}-\d{3}-\d{4}"
+        phone_numbers = self.kml.placemarks.children().filter(description__regex=regex)
 
         # Verify regex filtering - Store A has phone number in description
         self.assertEqual(len(phone_numbers), 1)
         phone_placemark = phone_numbers[0]
         self.assertEqual(phone_placemark.name, "Store A")
         if phone_placemark.description:
-            self.assertIsNotNone(re.search(r"\d{3}-\d{3}-\d{4}", phone_placemark.description))
+            self.assertIsNotNone(re.search(regex, phone_placemark.description))
 
     def test_getting_single_elements_get_example(self) -> None:
         """Test the get single element example from Getting Single Elements section."""
         # Example from documentation:
         # try:
-        #     headquarters = kml.placemarks.all().get(name='Headquarters')
+        #     headquarters = kml.placemarks.children().get(name='Headquarters')
         #     print(f"Found: {headquarters.name}")
         # except KMLElementNotFound:
         #     print("Headquarters not found")
@@ -236,7 +237,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         #     print("Multiple headquarters found - be more specific")
 
         try:
-            headquarters = self.kml.placemarks.all().get(name="Headquarters")
+            headquarters = self.kml.placemarks.children().get(name="Headquarters")
             found_message = f"Found: {headquarters.name}"
 
             # Verify we found the right element
@@ -250,19 +251,19 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_getting_single_elements_first_last_example(self) -> None:
         """Test the first/last example from Getting Single Elements section."""
         # Example from documentation:
-        # first_placemark = kml.placemarks.all().first()
+        # first_placemark = kml.placemarks.children().first()
         # if first_placemark:
         #     print(f"First placemark: {first_placemark.name}")
-        # last_placemark = kml.placemarks.all().order_by('name').last()
+        # last_placemark = kml.placemarks.children().order_by('name').last()
         # if last_placemark:
         #     print(f"Last alphabetically: {last_placemark.name}")
 
-        first_placemark = self.kml.placemarks.all().first()
+        first_placemark = self.kml.placemarks.children().first()
         if first_placemark:
             first_message = f"First placemark: {first_placemark.name}"
             self.assertIsNotNone(first_message)
 
-        last_placemark = self.kml.placemarks.all().order_by("name").last()
+        last_placemark = self.kml.placemarks.children().order_by("name").last()
         if last_placemark:
             last_message = f"Last alphabetically: {last_placemark.name}"
             self.assertIsNotNone(last_message)
@@ -274,14 +275,14 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_ordering_and_data_extraction_ordering_example(self) -> None:
         """Test the ordering example from Ordering and Data Extraction section."""
         # Example from documentation:
-        # by_name = kml.placemarks.all().order_by('name')
-        # by_name_desc = kml.placemarks.all().order_by('-name')
-        # complex_order = kml.placemarks.all().order_by('visibility', '-name')
+        # by_name = kml.placemarks.children().order_by('name')
+        # by_name_desc = kml.placemarks.children().order_by('-name')
+        # complex_order = kml.placemarks.children().order_by('visibility', '-name')
         # reversed_order = by_name.reverse()
 
-        by_name = self.kml.placemarks.all().order_by("name")
-        by_name_desc = self.kml.placemarks.all().order_by("-name")
-        complex_order = self.kml.placemarks.all().order_by("visibility", "-name")
+        by_name = self.kml.placemarks.children().order_by("name")
+        by_name_desc = self.kml.placemarks.children().order_by("-name")
+        complex_order = self.kml.placemarks.children().order_by("visibility", "-name")
         reversed_order = by_name.reverse()
 
         # Verify ordering works
@@ -298,11 +299,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_ordering_and_data_extraction_values_example(self) -> None:
         """Test the values extraction example from Ordering and Data Extraction section."""
         # Example from documentation:
-        # names_only = kml.placemarks.all().values('name')
-        # name_vis_pairs = kml.placemarks.all().values('name', 'visibility')
+        # names_only = kml.placemarks.children().values('name')
+        # name_vis_pairs = kml.placemarks.children().values('name', 'visibility')
 
-        names_only = self.kml.placemarks.all().values("name")
-        name_vis_pairs = self.kml.placemarks.all().values("name", "visibility")
+        names_only = self.kml.placemarks.children().values("name")
+        name_vis_pairs = self.kml.placemarks.children().values("name", "visibility")
 
         # Verify values extraction
         self.assertIsInstance(names_only, list)
@@ -318,11 +319,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_ordering_and_data_extraction_values_list_example(self) -> None:
         """Test the values_list example from Ordering and Data Extraction section."""
         # Example from documentation:
-        # name_list = kml.placemarks.all().values_list('name', flat=True)
-        # name_vis_tuples = kml.placemarks.all().values_list('name', 'visibility')
+        # name_list = kml.placemarks.children().values_list('name', flat=True)
+        # name_vis_tuples = kml.placemarks.children().values_list('name', 'visibility')
 
-        name_list = self.kml.placemarks.all().values_list("name", flat=True)
-        name_vis_tuples = self.kml.placemarks.all().values_list("name", "visibility")
+        name_list = self.kml.placemarks.children().values_list("name", flat=True)
+        name_vis_tuples = self.kml.placemarks.children().values_list("name", "visibility")
 
         # Verify values_list extraction
         self.assertIsInstance(name_list, list)
@@ -340,9 +341,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_geospatial_queries_near_example(self) -> None:
         """Test the near query example from Geospatial Queries section."""
         # Example from documentation:
-        # nearby_stores = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
+        # nearby_stores = kml.placemarks.children().near(-76.6, 39.3, radius_km=25)
 
-        nearby_stores = self.kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
+        nearby_stores = self.kml.placemarks.children().near(-76.6, 39.3, radius_km=25)
 
         # Verify geospatial query works - all our test placemarks should be within 25km
         self.assertGreaterEqual(len(nearby_stores), 1)
@@ -352,11 +353,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_geospatial_queries_within_bounds_example(self) -> None:
         """Test the within bounds example from Geospatial Queries section."""
         # Example from documentation:
-        # bounded_stores = kml.placemarks.all().within_bounds(
+        # bounded_stores = kml.placemarks.children().within_bounds(
         #     north=39.5, south=39.0, east=-76.0, west=-77.0
         # )
 
-        bounded_stores = self.kml.placemarks.all().within_bounds(
+        bounded_stores = self.kml.placemarks.children().within_bounds(
             north=39.5, south=39.0, east=-76.0, west=-77.0
         )
 
@@ -372,11 +373,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_geospatial_queries_coordinate_filters_example(self) -> None:
         """Test the coordinate filters example from Geospatial Queries section."""
         # Example from documentation:
-        # has_coords = kml.placemarks.all().has_coordinates()
-        # valid_coords = kml.placemarks.all().valid_coordinates()
+        # has_coords = kml.placemarks.children().has_coordinates()
+        # valid_coords = kml.placemarks.children().valid_coordinates()
 
-        has_coords = self.kml.placemarks.all().has_coordinates()
-        valid_coords = self.kml.placemarks.all().valid_coordinates()
+        has_coords = self.kml.placemarks.children().has_coordinates()
+        valid_coords = self.kml.placemarks.children().valid_coordinates()
 
         # Verify coordinate filtering - all our test placemarks have valid coordinates
         self.assertEqual(len(has_coords), 6)  # All placemarks have coordinates
@@ -386,14 +387,14 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the geospatial chaining example from Geospatial Queries section."""
         # Example from documentation:
         # nearby_visible = (
-        #     kml.placemarks.all()
+        #     kml.placemarks.children()
         #     .near(-76.6, 39.3, radius_km=10)
         #     .filter(visibility=True)
         #     .order_by('name')
         # )
 
         nearby_visible = (
-            self.kml.placemarks.all()
+            self.kml.placemarks.children()
             .near(-76.6, 39.3, radius_km=10)
             .filter(visibility=True)
             .order_by("name")
@@ -408,14 +409,14 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_queryset_chaining_step_by_step_example(self) -> None:
         """Test the step-by-step chaining example from QuerySet Chaining section."""
         # Example from documentation:
-        # base_query = kml.placemarks.all().filter(flatten=True)
+        # base_query = kml.placemarks.children()  # Direct children only
         # geographic_query = base_query.near(-76.6, 39.3, radius_km=50)
         # filtered_query = geographic_query.filter(visibility=True, name__icontains='store')
         # final_query = filtered_query.order_by('name')
         # results = list(final_query)
 
         # Build complex queries step by step
-        base_query = self.kml.placemarks.all()
+        base_query = self.kml.placemarks.children()
         geographic_query = base_query.near(-76.6, 39.3, radius_km=50)
         filtered_query = geographic_query.filter(visibility=True, name__icontains="store")
         final_query = filtered_query.order_by("name")
@@ -439,7 +440,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # )
 
         stores = (
-            self.kml.placemarks.all()
+            self.kml.placemarks.children()
             .near(-76.6, 39.3, radius_km=50)
             .filter(visibility=True, name__icontains="store")
             .order_by("name")
@@ -455,12 +456,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_queryset_properties_state_example(self) -> None:
         """Test the QuerySet properties example from QuerySet Properties section."""
         # Example from documentation:
-        # qs = kml.placemarks.all().filter(visibility=True).order_by('name')
+        # qs = kml.placemarks.children().filter(visibility=True).order_by('name')
         # print(f"Is ordered: {qs.is_ordered}")
         # print(f"Order fields: {qs.order_by_fields}")
         # print(f"Is distinct: {qs.is_distinct}")
 
-        qs = self.kml.placemarks.all().filter(visibility=True).order_by("name")
+        qs = self.kml.placemarks.children().filter(visibility=True).order_by("name")
 
         # Check QuerySet state
         is_ordered_msg = f"Is ordered: {qs.is_ordered}"
@@ -484,7 +485,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # print(f"Exists: {qs.exists()}")
         # print(f"Boolean: {bool(qs)}")
 
-        qs = self.kml.placemarks.all().filter(visibility=True)
+        qs = self.kml.placemarks.children().filter(visibility=True)
 
         count_msg = f"Count: {qs.count()}"
         exists_msg = f"Exists: {qs.exists()}"
@@ -507,7 +508,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # first_five = qs[:5]
         # middle_slice = qs[10:20]
 
-        qs = self.kml.placemarks.all().order_by("name")
+        qs = self.kml.placemarks.children().order_by("name")
 
         first_element = qs[0]
         first_five = qs[:5]
@@ -528,12 +529,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the conditional filtering example from Advanced Usage section."""
         # Example from documentation:
         # search_term = "restaurant"
-        # qs = kml.placemarks.all()
+        # qs = kml.placemarks.children()
         # if search_term:
         #     qs = qs.filter(name__icontains=search_term)
 
         search_term = "restaurant"
-        qs = self.kml.placemarks.all()
+        qs = self.kml.placemarks.children()
 
         if search_term:
             qs = qs.filter(name__icontains=search_term)
@@ -552,7 +553,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # end = start + page_size
         # page_results = qs[start:end]
 
-        qs = self.kml.placemarks.all().order_by("name")
+        qs = self.kml.placemarks.children().order_by("name")
         page_size = 3  # Use smaller page size for testing
         page_number = 2
         start = (page_number - 1) * page_size
@@ -571,7 +572,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # downtown_area = qs.within_bounds(north=39.3, south=39.2, east=-76.5, west=-76.7)
         # nearby_downtown = downtown_area.near(-76.6, 39.25, radius_km=5)
 
-        qs = self.kml.placemarks.all()
+        qs = self.kml.placemarks.children()
         downtown_area = qs.within_bounds(north=39.3, south=39.2, east=-76.5, west=-76.7)
         nearby_downtown = downtown_area.near(-76.6, 39.25, radius_km=5)
 
@@ -588,16 +589,16 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_advanced_usage_data_analysis_example(self) -> None:
         """Test the data analysis example from Advanced Usage section."""
         # Example from documentation:
-        # all_names = kml.placemarks.all().values_list('name', flat=True)
+        # all_names = kml.placemarks.children().values_list('name', flat=True)
         # unique_names = set(all_names)
-        # visible_count = kml.placemarks.all().filter(visibility=True).count()
-        # total_count = kml.placemarks.all().count()
+        # visible_count = kml.placemarks.children().filter(visibility=True).count()
+        # total_count = kml.placemarks.children().count()
         # visibility_ratio = visible_count / total_count if total_count > 0 else 0
 
-        all_names = self.kml.placemarks.all().values_list("name", flat=True)
+        all_names = self.kml.placemarks.children().values_list("name", flat=True)
         unique_names = set(all_names)
-        visible_count = self.kml.placemarks.all().filter(visibility=True).count()
-        total_count = self.kml.placemarks.all().count()
+        visible_count = self.kml.placemarks.children().filter(visibility=True).count()
+        total_count = self.kml.placemarks.children().count()
         visibility_ratio = visible_count / total_count if total_count > 0 else 0
 
         # Verify data analysis
@@ -611,11 +612,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_performance_lazy_evaluation_example(self) -> None:
         """Test the lazy evaluation example from Performance Considerations section."""
         # Example from documentation:
-        # qs = kml.placemarks.all().filter(name__icontains='store')  # Doesn't execute
+        # qs = kml.placemarks.children().filter(name__icontains='store')  # Doesn't execute
         # results = list(qs)  # This triggers execution
 
         # This doesn't execute any filtering yet
-        qs = self.kml.placemarks.all().filter(name__icontains="store")
+        qs = self.kml.placemarks.children().filter(name__icontains="store")
 
         # This triggers execution
         results = list(qs)
@@ -628,15 +629,17 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_performance_exists_vs_len_example(self) -> None:
         """Test the exists vs len example from Performance Considerations section."""
         # Example from documentation:
-        # has_stores = kml.placemarks.all().filter(name__icontains='store').exists()
-        # has_stores = len(kml.placemarks.all().filter(name__icontains='store')) > 0
+        # has_stores = kml.placemarks.children().filter(name__icontains='store').exists()
+        # has_stores = len(kml.placemarks.children().filter(name__icontains='store')) > 0
 
         # Good - efficient existence check
-        has_stores_efficient = self.kml.placemarks.all().filter(name__icontains="store").exists()
+        has_stores_efficient = (
+            self.kml.placemarks.children().filter(name__icontains="store").exists()
+        )
 
         # Less efficient - forces full evaluation
         has_stores_inefficient = (
-            len(list(self.kml.placemarks.all().filter(name__icontains="store"))) > 0
+            len(list(self.kml.placemarks.children().filter(name__icontains="store"))) > 0
         )
 
         # Verify both produce same result
@@ -646,15 +649,17 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
     def test_performance_count_vs_len_example(self) -> None:
         """Test the count vs len example from Performance Considerations section."""
         # Example from documentation:
-        # store_count = kml.placemarks.all().filter(name__icontains='store').count()
-        # store_count = len(list(kml.placemarks.all().filter(name__icontains='store')))
+        # store_count = kml.placemarks.children().filter(name__icontains='store').count()
+        # store_count = len(list(kml.placemarks.children().filter(name__icontains='store')))
 
         # Good - efficient counting
-        store_count_efficient = self.kml.placemarks.all().filter(name__icontains="store").count()
+        store_count_efficient = (
+            self.kml.placemarks.children().filter(name__icontains="store").count()
+        )
 
         # Less efficient - materializes full list
         store_count_inefficient = len(
-            list(self.kml.placemarks.all().filter(name__icontains="store"))
+            list(self.kml.placemarks.children().filter(name__icontains="store"))
         )
 
         # Verify both produce same result
@@ -669,7 +674,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         #         return qs.get(**filters)
         #     except KMLElementNotFound:
         #         return None
-        # headquarters = get_element_safely(kml.placemarks.all(), name='Headquarters')
+        # headquarters = get_element_safely(kml.placemarks.children(), name='Headquarters')
         # pylint: disable=import-outside-toplevel
         from kmlorm.core.querysets import KMLQuerySet as _KMLQuerySet
         from kmlorm.models.base import KMLElement as _KMLElement
@@ -680,8 +685,8 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
             except KMLElementNotFound:
                 return None
 
-        headquarters = get_element_safely(self.kml.placemarks.all(), name="Headquarters")
-        nonexistent = get_element_safely(self.kml.placemarks.all(), name="Nonexistent")
+        headquarters = get_element_safely(self.kml.placemarks.children(), name="Headquarters")
+        nonexistent = get_element_safely(self.kml.placemarks.children(), name="Nonexistent")
 
         # Verify safe retrieval
         self.assertIsNotNone(headquarters)
@@ -694,7 +699,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # Note: Current implementation doesn't support nested coordinate filtering
         # Test coordinate validation using available methods
 
-        valid_locations = self.kml.placemarks.all().has_coordinates().valid_coordinates()
+        valid_locations = self.kml.placemarks.children().has_coordinates().valid_coordinates()
 
         # Verify coordinate validation methods work
         self.assertGreater(len(valid_locations), 0)
@@ -712,13 +717,13 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # Example from documentation:
         # center_lat, center_lon = 39.3, -76.6
         # radius = 10
-        # cluster = kml.placemarks.all().near(center_lon, center_lat, radius_km=radius)
+        # cluster = kml.placemarks.children().near(center_lon, center_lat, radius_km=radius)
         # total_in_cluster = cluster.count()
         # visible_in_cluster = cluster.filter(visibility=True).count()
 
         center_lat, center_lon = 39.3, -76.6
         radius = 10
-        cluster = self.kml.placemarks.all().near(center_lon, center_lat, radius_km=radius)
+        cluster = self.kml.placemarks.children().near(center_lon, center_lat, radius_km=radius)
         total_in_cluster = cluster.count()
         visible_in_cluster = cluster.filter(visibility=True).count()
 
@@ -734,17 +739,17 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the data export example from Common Patterns section."""
         # Example from documentation:
         # summary = {
-        #     'total_placemarks': kml.placemarks.all().count(),
-        #     'visible_placemarks': kml.placemarks.all().filter(visibility=True).count(),
-        #     'placemarks_with_coords': kml.placemarks.all().has_coordinates().count(),
-        #     'unique_names': len(set(kml.placemarks.all().values_list('name', flat=True)))
+        #     'total_placemarks': kml.placemarks.children().count(),
+        #     'visible_placemarks': kml.placemarks.children().filter(visibility=True).count(),
+        #     'placemarks_with_coords': kml.placemarks.children().has_coordinates().count(),
+        #     'unique_names': len(set(kml.placemarks.children().values_list('name', flat=True)))
         # }
 
         summary = {
-            "total_placemarks": self.kml.placemarks.all().count(),
-            "visible_placemarks": self.kml.placemarks.all().filter(visibility=True).count(),
-            "placemarks_with_coords": self.kml.placemarks.all().has_coordinates().count(),
-            "unique_names": len(set(self.kml.placemarks.all().values_list("name", flat=True))),
+            "total_placemarks": self.kml.placemarks.children().count(),
+            "visible_placemarks": self.kml.placemarks.children().filter(visibility=True).count(),
+            "placemarks_with_coords": self.kml.placemarks.children().has_coordinates().count(),
+            "unique_names": len(set(self.kml.placemarks.children().values_list("name", flat=True))),
         }
 
         # Verify summary generation
@@ -755,7 +760,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
 
         # Test store data export
         store_data = (
-            self.kml.placemarks.all()
+            self.kml.placemarks.children()
             .filter(name__icontains="store")
             .values("name", "description", "visibility")
         )
@@ -770,7 +775,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the query exceptions example from Error Handling section."""
         # Example from documentation:
         # try:
-        #     unique_store = kml.placemarks.all().get(name='Unique Store')
+        #     unique_store = kml.placemarks.children().get(name='Unique Store')
         # except KMLElementNotFound:
         #     print("No store found with that name")
         # except KMLMultipleElementsReturned:
@@ -778,11 +783,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
 
         # Test KMLElementNotFound
         with self.assertRaises(KMLElementNotFound):
-            _ = self.kml.placemarks.all().get(name="Nonexistent Store")
+            _ = self.kml.placemarks.children().get(name="Nonexistent Store")
 
         # Test successful get
         try:
-            unique_store = self.kml.placemarks.all().get(name="Headquarters")
+            unique_store = self.kml.placemarks.children().get(name="Headquarters")
             self.assertEqual(unique_store.name, "Headquarters")
         except KMLElementNotFound:
             self.fail("Headquarters should exist")
@@ -800,11 +805,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
 
         with self.assertRaises(KMLValidationError):
             # This will raise during Coordinate creation in the near method
-            _ = self.kml.placemarks.all().near(200, 100, radius_km=10)
+            _ = self.kml.placemarks.children().near(200, 100, radius_km=10)
 
         # Test valid coordinates work
         try:
-            nearby = self.kml.placemarks.all().near(-76.6, 39.3, radius_km=10)
+            nearby = self.kml.placemarks.children().near(-76.6, 39.3, radius_km=10)
             self.assertIsNotNone(nearby)
         except (KMLInvalidCoordinates, KMLValidationError):
             self.fail("Valid coordinates should not raise exception")
@@ -813,7 +818,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         """Test the general query error example from Error Handling section."""
         # Example from documentation:
         # try:
-        #     result = kml.placemarks.all().filter(invalid_field='value')
+        #     result = kml.placemarks.children().filter(invalid_field='value')
         # except KMLQueryError as e:
         #     print(f"Query error: {e}")
 
@@ -823,7 +828,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
 
         try:
             # Test with a field that should work
-            result = self.kml.placemarks.all().filter(name="Store A")
+            result = self.kml.placemarks.children().filter(name="Store A")
             self.assertIsNotNone(result)
         except KMLQueryError:
             self.fail("Valid query should not raise KMLQueryError")

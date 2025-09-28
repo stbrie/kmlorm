@@ -6,6 +6,8 @@ are functional and produce the expected results.
 """
 
 # pylint: disable=duplicate-code
+import warnings
+
 import unittest
 import tempfile
 import os
@@ -128,23 +130,23 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         #
         # kml = KMLFile.from_file('example.kml')
         #
-        # # Access different element types (root-level only)
-        # root_placemarks = kml.placemarks.all()
-        # root_folders = kml.folders.all()
-        # root_paths = kml.paths.all()
-        # root_polygons = kml.polygons.all()
-        # root_points = kml.points.all()
-        # root_multigeometries = kml.multigeometries.all()
+        # # Access different element types (direct children only)
+        # root_placemarks = kml.placemarks.children()
+        # root_folders = kml.folders.children()
+        # root_paths = kml.paths.children()
+        # root_polygons = kml.polygons.children()
+        # root_points = kml.points.children()
+        # root_multigeometries = kml.multigeometries.children()
 
         kml = KMLFile.from_file(self.temp_file.name)
 
-        # Access different element types (root-level only) as shown in documentation
-        root_placemarks = kml.placemarks.all()
-        root_folders = kml.folders.all()
-        root_paths = kml.paths.all()
-        root_polygons = kml.polygons.all()
-        root_points = kml.points.all()
-        root_multigeometries = kml.multigeometries.all()
+        # Access different element types (direct children only) as shown in documentation
+        root_placemarks = kml.placemarks.children()
+        root_folders = kml.folders.children()
+        root_paths = kml.paths.children()
+        root_polygons = kml.polygons.children()
+        root_points = kml.points.children()
+        root_multigeometries = kml.multigeometries.children()
 
         # Verify root-level only behavior
         self.assertEqual(len(root_placemarks), 1)  # Only "Root Level Store"
@@ -440,35 +442,60 @@ class TestKMLFileDocsExamples(unittest.TestCase):
         self.assertTrue(has_coordinates or has_no_coordinates)  # Should have at least one type
 
     def test_flatten_parameter_note_behavior(self) -> None:
-        """Test the flatten parameter behavior described in the note."""
-        # Documentation note states:
-        # By default, manager methods like ``kml.placemarks.all()`` only return
-        # elements at the document root level.
-        # To include elements from nested folders, use ``flatten=True``:
-        # * ``kml.placemarks.all()`` - Root-level placemarks only
-        # * ``kml.placemarks.all(flatten=True)`` - All placemarks including nested ones
+        """Test the new API behavior described in the updated documentation note."""
+        # Updated documentation note states:
+        # Manager methods provide two ways to access elements:
+        # * ``kml.placemarks.children()`` - Direct children only
+        # * ``kml.placemarks.all()`` - All elements including nested ones
+        # The old flatten parameter is deprecated but still supported during transition.
 
         kml = KMLFile.from_file(self.temp_file.name)
 
-        # Test root-level only behavior
-        root_placemarks = kml.placemarks.all()
-        self.assertEqual(len(root_placemarks), 1)  # Only root-level placemark
+        # Test direct children only behavior
+        root_placemarks = kml.placemarks.children()
+        self.assertEqual(len(root_placemarks), 1)  # Only direct child placemark
 
-        # Test flatten=True behavior
-        all_placemarks = kml.placemarks.all(flatten=True)
-        self.assertGreater(len(all_placemarks), len(root_placemarks))  # Should include nested
+        # Test new all() behavior - includes nested elements by default
+        current_all_placemarks = kml.placemarks.all()
+        # Should include nested
+        self.assertGreaterEqual(len(current_all_placemarks), len(root_placemarks))
+
+        # Test deprecated flatten=True behavior (shows warning but works)
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            all_placemarks = kml.placemarks.all(flatten=True)
+            # Should get deprecation warning
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
+            self.assertIn("flatten=True parameter is deprecated", str(w[0].message))
+
+        # Results should be same as new default behavior
+        self.assertEqual(len(all_placemarks), len(current_all_placemarks))
+
+        # Test deprecated flatten=False behavior (shows warning and returns children)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            children_placemarks = kml.placemarks.all(flatten=False)
+            # Should get deprecation warning
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[0].category, DeprecationWarning))
+            self.assertIn("flatten=False parameter is deprecated", str(w[0].message))
+
+        # Results should match .children()
+        self.assertEqual(len(children_placemarks), len(root_placemarks))
 
         # Verify this applies to all element types as documented
-        root_folders = kml.folders.all()
-        all_folders = kml.folders.all(flatten=True)
+        root_folders = kml.folders.children()
+        all_folders = kml.folders.all()
         self.assertGreaterEqual(len(all_folders), len(root_folders))
 
         # Test the specific element types mentioned in the note
         element_types = ["placemarks", "folders", "paths", "polygons", "points", "multigeometries"]
         for element_type in element_types:
             manager = getattr(kml, element_type)
-            root_elements = manager.all()
-            all_elements = manager.all(flatten=True)
+            root_elements = manager.children()  # Direct children only
+            all_elements = manager.all()  # All elements including nested (new default)
             # All should be >= root (some might be empty but the method should work)
             self.assertGreaterEqual(len(all_elements), len(root_elements))
 

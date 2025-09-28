@@ -83,11 +83,11 @@ class Folder(KMLElement):
             Combined list of all contained elements
         """
         elements: List["KMLElement"] = []
-        elements.extend(self.placemarks.all())
-        elements.extend(self.folders.all())
-        elements.extend(self.paths.all())
-        elements.extend(self.polygons.all())
-        elements.extend(self.points.all())
+        elements.extend(self.placemarks.children())
+        elements.extend(self.folders.children())
+        elements.extend(self.paths.children())
+        elements.extend(self.polygons.children())
+        elements.extend(self.points.children())
         return elements
 
     def total_element_count(self) -> int:

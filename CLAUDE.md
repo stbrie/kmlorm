@@ -283,3 +283,4 @@ When suggesting or reviewing code, ensure it meets these criteria:
 - Version is automatically managed by setuptools_scm based on git tags
 - No manual version updates needed in code
 - Use semantic versioning for git tags (v1.0.0, v1.1.0, etc.)
+- do not write disposable or "one-off" tests.  any information that is required during development that a "one-off" would provide will be useful in the future when debugging.  any code that exposes information or workflow for development purposes needs to go in an appropriately named file in the tests/ folder for future reference.

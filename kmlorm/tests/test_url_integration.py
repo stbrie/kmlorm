@@ -125,7 +125,7 @@ class TestKMLFileURLIntegration:
         assert kml.document_description == "Sample KML file with store locations for testing"
 
         # Verify we have folders
-        folders = kml.folders.all()
+        folders = kml.folders.children()  # Direct child folders
         assert len(folders) > 0
         maryland_folder = next((f for f in folders if f.name == "Maryland Stores"), None)
         assert maryland_folder is not None
@@ -155,7 +155,7 @@ class TestKMLFileURLIntegration:
         assert isinstance(kml, KMLFile)
 
         # Verify we can access elements
-        placemarks = kml.placemarks.all()
+        placemarks = kml.placemarks.children()  # Direct child placemarks
         assert len(placemarks) > 0
 
         # Verify at least one placemark has coordinates

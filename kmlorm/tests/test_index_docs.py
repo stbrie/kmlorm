@@ -35,14 +35,14 @@ class TestIndexDocsExamples:
         # Load KML file
         kml = KMLFile.from_file(self.places_kml_file)  # Use our test file instead of 'places.kml'
 
-        # Query placemarks (use flatten=True to include those in folders)
-        all_places = kml.placemarks.all(flatten=True)
-        capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
-        nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+        # Query placemarks (use .all() to include those in folders, .children() for direct only)
+        all_places = kml.placemarks.all()
+        capital_stores = kml.placemarks.all().filter(name__icontains="capital")
+        nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
         # Chain queries
         nearby_open = (
-            kml.placemarks.all(flatten=True)
+            kml.placemarks.all()
             .filter(name__icontains="electric")
             .near(-76.6, 39.3, radius_km=50)
             .filter(visibility=True)
@@ -91,10 +91,10 @@ class TestIndexDocsExamples:
         kml = KMLFile.from_file(self.places_kml_file)
 
         # EXACT CODE FROM index.rst: Quick Example section
-        # Query placemarks (use flatten=True to include those in folders)
-        all_places = kml.placemarks.all(flatten=True)
-        capital_stores = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
-        nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+        # Query placemarks (use .all() to include those in folders, .children() for direct only)
+        all_places = kml.placemarks.all()
+        capital_stores = kml.placemarks.all().filter(name__icontains="capital")
+        nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
         # Verify each query works
         assert hasattr(all_places, "__iter__")
@@ -122,7 +122,7 @@ class TestIndexDocsExamples:
         # EXACT CODE FROM index.rst: Quick Example section
         # Chain queries
         nearby_open = (
-            kml.placemarks.all(flatten=True)
+            kml.placemarks.all()
             .filter(name__icontains="electric")
             .near(-76.6, 39.3, radius_km=50)
             .filter(visibility=True)
@@ -152,25 +152,25 @@ class TestIndexDocsExamples:
         assert callable(getattr(KMLFile, "from_file"))
 
     def test_flatten_parameter_behavior_as_documented(self) -> None:
-        """Test that flatten=True behavior works as documented in index.rst."""
+        """Test that new API behavior works as documented in index.rst."""
         # pylint: disable=import-outside-toplevel
         from kmlorm import KMLFile
 
         kml = KMLFile.from_file(self.places_kml_file)
 
-        # The documentation emphasizes using flatten=True to include folders
+        # The documentation now emphasizes the new intuitive API
         # Test that this pattern works
-        all_places_root = kml.placemarks.all()  # Without flatten
-        all_places_flat = kml.placemarks.all(flatten=True)  # With flatten
+        direct_children = kml.placemarks.children()  # Direct children only
+        all_places = kml.placemarks.all()  # All placemarks including nested
 
         # Verify both queries work
-        assert hasattr(all_places_root, "__iter__")
-        assert hasattr(all_places_flat, "__iter__")
+        assert hasattr(direct_children, "__iter__")
+        assert hasattr(all_places, "__iter__")
 
-        # With flatten=True should typically return more or equal elements
-        root_count = len(list(all_places_root))
-        flat_count = len(list(all_places_flat))
-        assert flat_count >= root_count
+        # all() should typically return more or equal elements than children()
+        children_count = len(list(direct_children))
+        all_count = len(list(all_places))
+        assert all_count >= children_count
 
     def test_geospatial_operations_as_documented(self) -> None:
         """Test that geospatial operations work as shown in index.rst features."""
@@ -180,12 +180,12 @@ class TestIndexDocsExamples:
         kml = KMLFile.from_file(self.places_kml_file)
 
         # Test the .near() operation mentioned in features
-        nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+        nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
         assert hasattr(nearby, "__iter__")
 
         # The features mention .within_bounds() - test that it exists and works
-        assert hasattr(kml.placemarks.all(flatten=True), "within_bounds")
-        bounded = kml.placemarks.all(flatten=True).within_bounds(
+        assert hasattr(kml.placemarks.all(), "within_bounds")
+        bounded = kml.placemarks.all().within_bounds(
             north=39.5, south=39.0, east=-76.0, west=-77.0
         )
         assert hasattr(bounded, "__iter__")
@@ -199,21 +199,21 @@ class TestIndexDocsExamples:
 
         # Test the Django-style methods mentioned in features
         # .objects.all() equivalent
-        all_placemarks = kml.placemarks.all(flatten=True)
+        all_placemarks = kml.placemarks.all()
         assert hasattr(all_placemarks, "__iter__")
 
         # .filter() method
-        filtered = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
+        filtered = kml.placemarks.all().filter(name__icontains="capital")
         assert hasattr(filtered, "__iter__")
 
         # .get() method - test that it exists (we'll use a safe call)
-        placemarks_list = list(kml.placemarks.all(flatten=True))
+        placemarks_list = list(kml.placemarks.all())
         if placemarks_list:
             # Find a unique name to test .get() with
             first_placemark = placemarks_list[0]
             if first_placemark.name:
                 try:
-                    single = kml.placemarks.all(flatten=True).get(name=first_placemark.name)
+                    single = kml.placemarks.all().get(name=first_placemark.name)
                     assert single is not None
                 except Exception:  # pylint: disable=broad-except
                     # Multiple elements might exist with same name, that's ok
@@ -227,7 +227,7 @@ class TestIndexDocsExamples:
         kml = KMLFile.from_file(self.places_kml_file)
 
         # Test building complex geospatial queries step by step
-        base_query = kml.placemarks.all(flatten=True)
+        base_query = kml.placemarks.all()
         with_filter = base_query.filter(name__icontains="electric")
         with_location = with_filter.near(-76.6, 39.3, radius_km=50)
         final_query = with_location.filter(visibility=True)
@@ -254,20 +254,20 @@ class TestIndexDocsExamples:
         assert isinstance(kml, KMLFile)
 
         # 2. Accessing elements
-        placemarks = kml.placemarks.all(flatten=True)
+        placemarks = kml.placemarks.all()
         assert hasattr(placemarks, "__iter__")
 
         # 3. Filtering
-        filtered = kml.placemarks.all(flatten=True).filter(name__icontains="capital")
+        filtered = kml.placemarks.all().filter(name__icontains="capital")
         assert hasattr(filtered, "__iter__")
 
         # 4. Geospatial queries
-        nearby = kml.placemarks.all(flatten=True).near(-76.6, 39.3, radius_km=25)
+        nearby = kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
         assert hasattr(nearby, "__iter__")
 
         # 5. Query chaining
         chained = (
-            kml.placemarks.all(flatten=True)
+            kml.placemarks.all()
             .filter(name__icontains="electric")
             .near(-76.6, 39.3, radius_km=50)
         )

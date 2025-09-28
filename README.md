@@ -7,7 +7,7 @@ A Django-style ORM for KML (Keyhole Markup Language) files that provides intuiti
 - **Django-style API**: Familiar `.objects.all()`, `.filter()`, `.get()` methods
 - **Chainable queries**: Build complex geospatial queries step by step
 - **Type hints**: Full type annotation support for modern Python development
-- **No Django dependency**: Use Django patterns without the framework
+- **No Django dependency**: Use the Django(-ish) patterns you know and love (now with less Django!)
 - **Geospatial operations**: Built-in spatial queries like `.near()`, `.within_bounds()`
 - **Python data structures**: Access KML data as native Python objects
 
@@ -35,16 +35,28 @@ nearby_open = (kml.placemarks
 rosedale = kml.placemarks.get(address__contains='Rosedale')
 ```
 
+### Hierarchical Querying
+
+Work with nested folder structures using intuitive methods:
+
+```python
+# Get only direct children (placemarks at root level)
+root_placemarks = kml.placemarks.children()
+
+# Get ALL placemarks including nested ones
+all_placemarks = kml.placemarks.all()
+
+# Same pattern works for folders
+root_folders = kml.folders.children()
+all_folders = kml.folders.all()
+
+# Chain with other methods
+visible_root_places = kml.placemarks.children().filter(visibility=True)
+```
+
 ## Installation
 
 ```bash
-pip install kmlorm
-```
-
-For additional functionality:
-
-```bash
-# Core installation (recommended)
 pip install kmlorm
 ```
 
@@ -53,7 +65,7 @@ pip install kmlorm
 - Python 3.11+
 - lxml
 
-Note: This repository includes a built-in XML parser at `kmlorm/parsers/xml_parser.py` that will use `lxml` when available and fall back to the stdlib parser. If your environment or CI expects `lxml`-specific behaviour, install the `lxml` package.
+Note: This repository includes a built-in XML parser at `kmlorm/parsers/xml_parser.py` that will use `lxml`.  The kmlorm package will not work without it.
 
 ## Version Compatibility
 
@@ -73,9 +85,9 @@ KML ORM follows a pragmatic approach to dependency versioning:
 
 ### If you encounter issues:
 
-1. Try upgrading all dependencies: `pip install --upgrade kmlorm[all]`
+1. Try upgrading all dependencies: `pip install --upgrade kmlorm`
 2. Check if the issue exists with the latest versions
-3. [File an issue](https://github.com/jackusername/kmlorm/issues) with your environment details
+3. [File an issue](https://github.com/stbrie/kmlorm/issues) with your environment details
 
 This approach keeps the library maintainable while providing a good experience for most users.
 
@@ -160,32 +172,11 @@ The project parses KML 2.2 data and commonly-seen Google Earth attributes. Use t
 - gx: `http://www.google.com/kml/ext/2.2`
 - atom: `http://www.w3.org/2005/Atom`
 
-Note: the `gx` extensions (the `gx` namespace) as well as Atom metadata are not currently supported by kmlorm in particular, though lxml can parse them.
+Note: neither the `gx` extensions (the `gx` namespace) nor Atom metadata are currently supported by kmlorm in particular, though lxml can parse them.  You could write an extension and submit it as a PR.
 
 Note: The `gx` namespace URI is a stable identifier used by Google but is not necessarily a browsable documentation page. For human-readable documentation about the `gx` extension elements see:
 
 https://developers.google.com/kml/documentation/kmlreference#kmlextensions
-
-Example (ElementTree / lxml namespace mapping):
-
-```python
-from lxml import etree
-
-# Load and parse the KML file
-tree = etree.parse("kmlorm/tests/fixtures/google_earth_kml.kml")
-root = tree.getroot()
-
-# Define namespace mapping
-ns = {
-    "kml": "http://www.opengis.net/kml/2.2",
-    "gx": "http://www.google.com/kml/ext/2.2",
-    "atom": "http://www.w3.org/2005/Atom",
-}
-
-# Find all gx:altitudeMode elements
-for e in root.findall(".//gx:altitudeMode", namespaces=ns):
-    print(e.text)
-```
 
 ## Tests & Fixtures
 
@@ -198,14 +189,26 @@ Run tests locally with:
 pytest -q
 ```
 
-## Limitations / Current implementation status
+ ## Limitations / Current Implementation Status
 
-This project implements a working set of KML parsing and model objects but some advanced features are intentionally partial or planned:
+  This project implements a comprehensive KML parsing and ORM system with most core features fully functional:
 
-- Implemented: basic models (Placemark, Folder, Point, Path, Polygon, MultiGeometry), core parsing, and a QuerySet/Manager skeleton.
-- Planned: full `gx` feature support (e.g. `gx:Track`, `gx:Tour`) and some advanced QuerySet geospatial operators. See `docs/GOOGLE_KML_EXTENSIONS.md` and `docs/KML_ORM_SPECIFICATION.md` for details and roadmap.
+  **Fully Implemented:**
+  - All KML models (Placemark, Folder, Point, Path, Polygon, MultiGeometry)
+  - Complete Django-style QuerySet/Manager API with filtering and geospatial operations
+  - HTTP/HTTPS URL loading for remote KML files
+  - Hierarchical folder navigation with `flatten=True` support
+  - Type-safe `to_dict()` methods for external library integration
+  - Comprehensive test suite (22 test files) with documentation validation
 
-This project depends on `lxml`.  You'll need to install it in your environment if you want to use `kmlorm`.
+  **Planned/Limited:**
+  - Google Earth Extensions (`gx:Track`, `gx:Tour`) - partial support
+  - Advanced spatial indexing and operations
+  - Built-in export formats (users can create their own using `to_dict()`)
+
+  See `docs/GOOGLE_KML_EXTENSIONS.md` and `docs/KML_ORM_SPECIFICATION.md` for details.
+
+  This project depends on `lxml`. You'll need to install it in your environment if you want to use `kmlorm`.
 
 ## License
 

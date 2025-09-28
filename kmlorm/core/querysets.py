@@ -91,7 +91,7 @@ class KMLQuerySet(Generic[T]):
 
     def __bool__(self) -> bool:
         """Return True if QuerySet has any elements."""
-        return bool(self._elements)
+        return bool(self._elements) or False
 
     def __repr__(self) -> str:
         """Developer-friendly representation."""

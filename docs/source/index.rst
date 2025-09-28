@@ -35,7 +35,7 @@ Features
 * **Django-style API**: Familiar ``.objects.all()``, ``.filter()``, ``.get()`` methods
 * **Chainable queries**: Build complex geospatial queries step by step
 * **Type hints**: Full type annotation support for modern Python development
-* **No Django dependency**: Use Django patterns without the framework
+* **Django knowledge transfers**: Use the Django patterns that you know and love to parse and examine KML (now with less Django!)
 * **Geospatial operations**: Built-in spatial queries like ``.near()``, ``.within_bounds()``
 * **Python data structures**: Access KML data as native Python objects
 
@@ -60,6 +60,26 @@ Quick Example
        .near(-76.6, 39.3, radius_km=50)
        .filter(visibility=True)
    )
+
+Hierarchical Querying
+----------------------
+
+Work with nested folder structures using intuitive methods:
+
+.. code-block:: python
+
+   # Get only direct children (root-level placemarks)
+   root_placemarks = kml.placemarks.children()
+
+   # Get ALL placemarks including nested ones (new preferred way)
+   all_placemarks = kml.placemarks.all()
+
+   # The above is equivalent to (but cleaner than):
+   all_placemarks = kml.placemarks.all(flatten=True)
+
+   # Same pattern works for folders
+   root_folders = kml.folders.children()
+   all_folders = kml.folders.all()
 
 Installation
 ------------

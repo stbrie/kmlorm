@@ -67,11 +67,11 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_basic_manager_operations_root_level_elements_example(self) -> None:
         """Test the root-level elements example from Basic Manager Operations section."""
         # Example from documentation:
-        # root_placemarks = kml.placemarks.all()
-        # root_folders = kml.folders.all()
+        # root_placemarks = kml.placemarks.children()  # Direct children only
+        # root_folders = kml.folders.children()  # Direct children only
 
-        root_placemarks = self.kml.placemarks.all()
-        root_folders = self.kml.folders.all()
+        root_placemarks = self.kml.placemarks.children()  # Direct children only
+        root_folders = self.kml.folders.children()  # Direct children only
 
         # Verify we get the expected elements
         self.assertEqual(len(root_placemarks), 3)
@@ -244,7 +244,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         self.assertEqual(new_placemark.name, "New Store Location")
         self.assertEqual(new_placemark.description, "A newly added store")
         self.assertEqual(self.kml.placemarks.count(), initial_count + 1)
-        self.assertIn(new_placemark, self.kml.placemarks.all())
+        self.assertIn(new_placemark, self.kml.placemarks.children())
 
     def test_creating_and_managing_elements_add_existing_example(self) -> None:
         """Test the add existing elements example from Creating and Managing Elements section."""
@@ -259,7 +259,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
 
         # Verify the placemark was added
         self.assertEqual(self.kml.placemarks.count(), initial_count + 1)
-        self.assertIn(another_placemark, self.kml.placemarks.all())
+        self.assertIn(another_placemark, self.kml.placemarks.children())
 
     def test_creating_and_managing_elements_bulk_creation_example(self) -> None:
         """Test the bulk creation example from Creating and Managing Elements section."""
@@ -277,7 +277,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         # Verify bulk creation worked
         self.assertEqual(self.kml.placemarks.count(), initial_count + 10)
         for placemark in bulk_placemarks:
-            self.assertIn(placemark, self.kml.placemarks.all())
+            self.assertIn(placemark, self.kml.placemarks.children())
 
     def test_creating_and_managing_elements_get_or_create_example(self) -> None:
         """Test the get or create example from Creating and Managing Elements section."""
@@ -307,12 +307,12 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
     def test_working_with_relationships_access_folder_contents_example(self) -> None:
         """Test the folder contents access example from Working with Relationships section."""
         # Example from documentation:
-        # for folder in kml.folders.all():
+        # for folder in kml.folders.children():
         #     print(f"Folder: {folder.name}")
-        #     folder_placemarks = folder.placemarks.all()
+        #     folder_placemarks = folder.placemarks.children()
         #     for placemark in folder_placemarks:
         #         print(f"  Placemark: {placemark.name}")
-        #     subfolders = folder.folders.all()
+        #     subfolders = folder.folders.children()
         #     for subfolder in subfolders:
         #         print(f"  Subfolder: {subfolder.name}")
 
@@ -320,16 +320,16 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         self.folder1.placemarks.add(self.placemark1)
 
         folder_output = []
-        for folder in self.kml.folders.all():
+        for folder in self.kml.folders.children():
             folder_line = f"Folder: {folder.name}"
             folder_output.append(folder_line)
 
-            folder_placemarks = folder.placemarks.all()
+            folder_placemarks = folder.placemarks.children()
             for placemark in folder_placemarks:
                 placemark_line = f"  Placemark: {placemark.name}"
                 folder_output.append(placemark_line)
 
-            subfolders = folder.folders.all()
+            subfolders = folder.folders.children()
             for subfolder in subfolders:
                 subfolder_line = f"  Subfolder: {subfolder.name}"
                 folder_output.append(subfolder_line)
@@ -363,7 +363,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
             self.assertEqual(new_placemark.name, "Store in Folder")
             self.assertEqual(new_placemark.description, "Added to specific folder")
             self.assertEqual(main_folder.placemarks.count(), initial_count + 1)
-            self.assertIn(new_placemark, main_folder.placemarks.all())
+            self.assertIn(new_placemark, main_folder.placemarks.children())
 
     def test_best_practices_flatten_for_comprehensive_queries_example(self) -> None:
         """Test the flatten best practice example from Best Practices section."""
@@ -414,7 +414,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
 
         # Verify the exception handling creates the element when not found
         self.assertEqual(unique_store.name, "Unique Store")
-        self.assertIn(unique_store, self.kml.placemarks.all())
+        self.assertIn(unique_store, self.kml.placemarks.children())
 
     def test_best_practices_use_appropriate_managers_example(self) -> None:
         """Test the appropriate managers best practice from Best Practices section."""
@@ -423,7 +423,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         # folder = kml.folders.first()
         # if folder:
         #     # Use related manager for folder contents
-        #     folder_placemarks = folder.placemarks.all()
+        #     folder_placemarks = folder.placemarks.children()
         #     # Create elements in specific folder
         #     new_placemark = folder.placemarks.create(name='In Folder')
 
@@ -431,7 +431,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         folder = self.kml.folders.first()
         if folder:
             # Use related manager for folder contents
-            folder_placemarks = folder.placemarks.all()
+            folder_placemarks = folder.placemarks.children()
 
             # Create elements in specific folder
             new_placemark = folder.placemarks.create(name="In Folder")
@@ -439,7 +439,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
             # Verify proper manager usage
             self.assertIsNotNone(folder_placemarks)
             self.assertEqual(new_placemark.name, "In Folder")
-            self.assertIn(new_placemark, folder.placemarks.all())
+            self.assertIn(new_placemark, folder.placemarks.children())
 
     def test_best_practices_leverage_geospatial_queries_example(self) -> None:
         """Test the geospatial queries best practice from Best Practices section."""
