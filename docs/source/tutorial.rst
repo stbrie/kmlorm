@@ -109,6 +109,37 @@ Query across all folders simultaneously:
 those in nested folders. Use ``kml.placemarks.children()`` for direct
 children only.
 
+.. note::
+   When called on a folder object, ``folder.placemarks.all()`` currently
+   behaves the same as ``folder.placemarks.children()`` - it returns only
+   direct children and does not traverse nested subfolders.
+
+To get all placemarks within a folder including those in nested subfolders,
+filter from the root:
+
+.. code-block:: python
+
+   # Get all placemarks in Supply Locations folder and its subfolders
+   supply_folder = kml.folders.children().get(name='Supply Locations')
+
+   # This only gets direct children (2 placemarks)
+   direct_only = supply_folder.placemarks.children()
+
+   # To get ALL placemarks including nested ones, filter from root
+   # by checking if placemark's parent hierarchy includes the folder
+   def get_all_nested_placemarks(folder):
+       """Get all placemarks in folder including nested subfolders."""
+       result = []
+       # Add direct placemarks
+       result.extend(folder.placemarks.children())
+       # Recursively add from subfolders
+       for subfolder in folder.folders.children():
+           result.extend(get_all_nested_placemarks(subfolder))
+       return result
+
+   # Now this gets all 3 placemarks (2 direct + 1 in Warehouse subfolder)
+   all_nested = get_all_nested_placemarks(supply_folder)
+
 Spatial Operations
 ------------------
 

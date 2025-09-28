@@ -6,7 +6,7 @@ with coordinates and extended attributes from KML files.
 """
 
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, List
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
 
 from kmlorm.core.managers import PlacemarkManager
 from .base import KMLElement
@@ -15,6 +15,7 @@ from .point import Coordinate, Point
 
 if TYPE_CHECKING:
     from .multigeometry import MultiGeometry
+    from ..spatial.calculations import DistanceUnit
 
 
 class Placemark(KMLElement):
@@ -145,7 +146,7 @@ class Placemark(KMLElement):
         )
         return base_dict
 
-    def get_coordinates(self) -> Optional['Coordinate']:
+    def get_coordinates(self) -> Optional["Coordinate"]:
         """
         Return the coordinate representation of this placemark.
 
@@ -161,8 +162,8 @@ class Placemark(KMLElement):
 
     def distance_to(
         self,
-        other: Union['Coordinate', 'Point', "Placemark", Tuple[float, float], list],
-        unit: Optional['DistanceUnit'] = None
+        other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list],
+        unit: Optional["DistanceUnit"] = None,
     ) -> Optional[float]:
         """
         Calculate distance to another spatial object.
@@ -201,8 +202,7 @@ class Placemark(KMLElement):
         return None
 
     def bearing_to(
-        self,
-        other: Union['Coordinate', 'Point', "Placemark", Tuple[float, float], list]
+        self, other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list]
     ) -> Optional[float]:
         """
         Calculate bearing to another spatial object.
@@ -211,8 +211,8 @@ class Placemark(KMLElement):
             other: Target object with coordinates
 
         Returns:
-            Initial bearing in degrees (0-360), or None if this placemark or target has no coordinates
-            0° = North, 90° = East, 180° = South, 270° = West
+            Initial bearing in degrees (0-360), or None if this placemark or target has
+            no coordinates 0° = North, 90° = East, 180° = South, 270° = West
 
         Examples:
             >>> placemark1 = Placemark(name="Start", coordinates=(0, 0))
@@ -229,9 +229,8 @@ class Placemark(KMLElement):
         return None
 
     def midpoint_to(
-        self,
-        other: Union['Coordinate', 'Point', "Placemark", Tuple[float, float], list]
-    ) -> Optional['Coordinate']:
+        self, other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list]
+    ) -> Optional["Coordinate"]:
         """
         Find geographic midpoint to another spatial object.
 
@@ -284,4 +283,3 @@ class Placemark(KMLElement):
             )
 
         return True
-

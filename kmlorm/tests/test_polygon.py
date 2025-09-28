@@ -9,6 +9,7 @@ Test cases:
 - Validation that invalid coordinate tuples raise KMLInvalidCoordinates.
 """
 
+# pylint: disable=duplicate-code
 from typing import List, Tuple, Union
 
 import pytest

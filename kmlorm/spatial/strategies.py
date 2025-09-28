@@ -15,9 +15,9 @@ Usage:
     >>> distance = strategy.calculate(40.7128, -74.006, 51.5074, -0.1276)
 """
 
+# pylint: disable=duplicate-code, too-few-public-methods, too-many-locals
 import math
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from .constants import (
     EARTH_RADIUS_MEAN_KM,
@@ -51,14 +51,13 @@ class DistanceStrategy(ABC):
         Raises:
             ValueError: If coordinates are invalid
         """
-        pass
 
     def _validate_coordinates(self, lat1: float, lon1: float, lat2: float, lon2: float) -> None:
         """Validate that coordinates are within valid ranges."""
-        if not (-90 <= lat1 <= 90) or not (-90 <= lat2 <= 90):
-            raise ValueError(f"Latitude must be between -90 and 90 degrees")
-        if not (-180 <= lon1 <= 180) or not (-180 <= lon2 <= 180):
-            raise ValueError(f"Longitude must be between -180 and 180 degrees")
+        if not -90 <= lat1 <= 90 or not -90 <= lat2 <= 90:
+            raise ValueError(f"Latitude must be between -90 and 90 degrees: got {lat1=} {lat2=}")
+        if not -180 <= lon1 <= 180 or not -180 <= lon2 <= 180:
+            raise ValueError(f"Longitude must be between -180 and 180 degrees: got {lon1=} {lon2=}")
 
 
 class HaversineStrategy(DistanceStrategy):
@@ -98,15 +97,13 @@ class HaversineStrategy(DistanceStrategy):
 
         # Convert to radians
         lat1_r, lon1_r, lat2_r, lon2_r = map(
-            lambda x: x * DEGREES_TO_RADIANS,
-            [lat1, lon1, lat2, lon2]
+            lambda x: x * DEGREES_TO_RADIANS, [lat1, lon1, lat2, lon2]
         )
 
         # Haversine formula
         dlat = lat2_r - lat1_r
         dlon = lon2_r - lon1_r
-        a = (math.sin(dlat / 2) ** 2 +
-             math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2)
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
         c = 2 * math.asin(math.sqrt(a))
 
         return EARTH_RADIUS_MEAN_KM * c
@@ -157,7 +154,10 @@ class VincentyStrategy(DistanceStrategy):
         self._validate_coordinates(lat1, lon1, lat2, lon2)
 
         # Check for identical points
-        if abs(lat1 - lat2) < DEFAULT_COORDINATE_PRECISION and abs(lon1 - lon2) < DEFAULT_COORDINATE_PRECISION:
+        if (
+            abs(lat1 - lat2) < DEFAULT_COORDINATE_PRECISION
+            and abs(lon1 - lon2) < DEFAULT_COORDINATE_PRECISION
+        ):
             return 0.0
 
         # Convert to radians
@@ -171,6 +171,7 @@ class VincentyStrategy(DistanceStrategy):
         f = WGS84_F
         b = (1 - f) * a
 
+        # pylint: disable=invalid-name
         L = lon2_r - lon1_r  # Difference in longitude
         U1 = math.atan((1 - f) * math.tan(lat1_r))  # Reduced latitude
         U2 = math.atan((1 - f) * math.tan(lat2_r))  # Reduced latitude
@@ -191,8 +192,7 @@ class VincentyStrategy(DistanceStrategy):
             cos_lambda = math.cos(lambda_val)
 
             sin_sigma = math.sqrt(
-                (cos_U2 * sin_lambda) ** 2 +
-                (cos_U1 * sin_U2 - sin_U1 * cos_U2 * cos_lambda) ** 2
+                (cos_U2 * sin_lambda) ** 2 + (cos_U1 * sin_U2 - sin_U1 * cos_U2 * cos_lambda) ** 2
             )
 
             if sin_sigma == 0:
@@ -202,21 +202,20 @@ class VincentyStrategy(DistanceStrategy):
             sigma = math.atan2(sin_sigma, cos_sigma)
 
             sin_alpha = cos_U1 * cos_U2 * sin_lambda / sin_sigma
-            cos2_alpha = 1 - sin_alpha ** 2
+            cos2_alpha = 1 - sin_alpha**2
 
             if cos2_alpha == 0:
                 # Equatorial line
-                cos_2sigma_m = 0
+                cos_2sigma_m = 0.0
             else:
                 cos_2sigma_m = cos_sigma - 2 * sin_U1 * sin_U2 / cos2_alpha
 
             C = f / 16 * cos2_alpha * (4 + f * (4 - 3 * cos2_alpha))
 
             lambda_prev = lambda_val
-            lambda_val = (L + (1 - C) * f * sin_alpha *
-                         (sigma + C * sin_sigma *
-                          (cos_2sigma_m + C * cos_sigma *
-                           (-1 + 2 * cos_2sigma_m ** 2))))
+            lambda_val = L + (1 - C) * f * sin_alpha * (
+                sigma + C * sin_sigma * (cos_2sigma_m + C * cos_sigma * (-1 + 2 * cos_2sigma_m**2))
+            )
 
             if antipodal and iteration > 50:
                 # Handle antipodal case
@@ -229,15 +228,23 @@ class VincentyStrategy(DistanceStrategy):
             haversine = HaversineStrategy()
             return haversine.calculate(lat1, lon1, lat2, lon2)
 
-        u2 = cos2_alpha * (a ** 2 - b ** 2) / (b ** 2)
+        u2 = cos2_alpha * (a**2 - b**2) / (b**2)
         A = 1 + u2 / 16384 * (4096 + u2 * (-768 + u2 * (320 - 175 * u2)))
         B = u2 / 1024 * (256 + u2 * (-128 + u2 * (74 - 47 * u2)))
 
-        delta_sigma = (B * sin_sigma *
-                      (cos_2sigma_m + B / 4 *
-                       (cos_sigma * (-1 + 2 * cos_2sigma_m ** 2) -
-                        B / 6 * cos_2sigma_m * (-3 + 4 * sin_sigma ** 2) *
-                        (-3 + 4 * cos_2sigma_m ** 2))))
+        delta_sigma = (
+            B
+            * sin_sigma
+            * (
+                cos_2sigma_m
+                + B
+                / 4
+                * (
+                    cos_sigma * (-1 + 2 * cos_2sigma_m**2)
+                    - B / 6 * cos_2sigma_m * (-3 + 4 * sin_sigma**2) * (-3 + 4 * cos_2sigma_m**2)
+                )
+            )
+        )
 
         s = b * A * (sigma - delta_sigma)
 
@@ -342,13 +349,12 @@ class AdaptiveStrategy(DistanceStrategy):
 
         if approx_distance < 50:  # Small distance - use Euclidean
             return approx_distance
-        elif approx_distance < 10000 or not self.high_accuracy:  # Medium distance - use Haversine
+        if approx_distance < 10000 or not self.high_accuracy:  # Medium distance - use Haversine
             return self.haversine.calculate(lat1, lon1, lat2, lon2)
-        else:  # Long distance and high accuracy required - use Vincenty
-            if self.vincenty:
-                return self.vincenty.calculate(lat1, lon1, lat2, lon2)
-            else:
-                return self.haversine.calculate(lat1, lon1, lat2, lon2)
+        # Long distance and high accuracy required - use Vincenty
+        if self.vincenty:
+            return self.vincenty.calculate(lat1, lon1, lat2, lon2)
+        return self.haversine.calculate(lat1, lon1, lat2, lon2)
 
 
 # Default strategy for the spatial calculations module

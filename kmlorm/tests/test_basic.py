@@ -110,13 +110,9 @@ class TestQuerySet:
     manager: KMLManager
 
     @pytest.fixture(autouse=True)
-    def setup_method(self) -> None:
-        """Set up test data."""
-        self.placemarks = [
-            Placemark(name="Capital Electric - Rosedale", coordinates=(-76.5, 39.3)),
-            Placemark(name="Capital Electric - Timonium", coordinates=(-76.6, 39.4)),
-            Placemark(name="Other Store", coordinates=(-76.7, 39.5)),
-        ]
+    def setup_test_data(self, sample_placemarks: List[Placemark]) -> None:
+        """Set up test data using fixture from conftest."""
+        self.placemarks = sample_placemarks
 
         # Create a manager and add placemarks
         self.manager = KMLManager()

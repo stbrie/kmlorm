@@ -7,7 +7,6 @@ methods like filter(), exclude(), get(), etc. in a Django-compatible way.
 
 # pylint: disable=too-many-public-methods
 import logging
-import math
 import re
 from typing import (
     TYPE_CHECKING,
@@ -468,8 +467,11 @@ class KMLQuerySet(Generic[T]):
         Returns:
             New QuerySet with nearby elements
         """
-        from ..models.point import Coordinate  # pylint: disable=import-outside-toplevel
-        from ..spatial.calculations import SpatialCalculations  # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel
+        from ..models.point import Coordinate
+        from ..spatial.calculations import (
+            SpatialCalculations,
+        )
 
         center = Coordinate(longitude=longitude, latitude=latitude, altitude=0.0)
 
@@ -747,4 +749,3 @@ class KMLQuerySet(Generic[T]):
                 str(e),
             )
             return None
-

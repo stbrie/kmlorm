@@ -6,13 +6,14 @@ This test suite ensures that all code examples in the exceptions documentation
 are functional and produce the expected results.
 """
 
-# pylint: disable=duplicate-code
-import unittest
+# pylint: disable=duplicate-code, too-many-public-methods
+
 import logging
 import tempfile
-import os
+from pathlib import Path
 from unittest.mock import patch
-from typing import Optional
+from typing import Optional, Generator
+import pytest
 from kmlorm import KMLFile
 from kmlorm.models.point import Coordinate
 from kmlorm.core.exceptions import (
@@ -26,13 +27,13 @@ from kmlorm.core.exceptions import (
 )
 
 
-class TestExceptionsDocsExamples(unittest.TestCase):
+class TestExceptionsDocsExamples:
     """Test cases that validate exceptions.rst documentation examples."""
 
-    def setUp(self) -> None:
-        """Set up test fixtures."""
-        # Create a temporary KML file for testing
-        self.temp_kml_content = """<?xml version="1.0" encoding="UTF-8"?>
+    @pytest.fixture
+    def temp_kml_content(self) -> str:
+        """Provide comprehensive KML content for testing exceptions."""
+        return """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
     <Document>
         <name>Test Document</name>
@@ -67,23 +68,30 @@ class TestExceptionsDocsExamples(unittest.TestCase):
     </Document>
 </kml>"""
 
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as temp_file:
-            temp_file.write(self.temp_kml_content)
-        self.temp_file = temp_file
+    @pytest.fixture
+    def temp_kml_file(self, temp_kml_content: str) -> Generator[Path, None, None]:
+        """Create temporary KML file for testing."""
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".kml", delete=False, encoding="utf-8"
+        ) as temp_file:
+            temp_file.write(temp_kml_content)
+            temp_path = Path(temp_file.name)
 
-        # Invalid KML content
-        self.invalid_kml_content = """<?xml version="1.0" encoding="UTF-8"?>
+        yield temp_path
+
+        # Cleanup
+        if temp_path.exists():
+            temp_path.unlink()
+
+    @pytest.fixture
+    def invalid_kml_content(self) -> str:
+        """Provide invalid KML content for testing parse errors."""
+        return """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
     <Document>
         <InvalidElement>This is not valid KML</InvalidElement>
     </Document>
 </kml>"""
-
-    def tearDown(self) -> None:
-        """Clean up test fixtures."""
-        if os.path.exists(self.temp_file.name):
-            os.unlink(self.temp_file.name)
 
     def test_handling_parse_errors_basic_example(self) -> None:
         """Test the basic parse error example from exceptions.rst."""
@@ -97,19 +105,21 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Failed to parse KML: {e}")
 
         # Create an invalid KML file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as invalid_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".kml", delete=False, encoding="utf-8"
+        ) as invalid_file:
             invalid_file.write("invalid xml content")
-        invalid_file.close()
+            invalid_path = Path(invalid_file.name)
 
         try:
-            with self.assertRaises(KMLParseError) as context:
-                _ = KMLFile.from_file(invalid_file.name)
+            with pytest.raises(KMLParseError) as exc_info:
+                _ = KMLFile.from_file(str(invalid_path))
 
             # Verify we can format the error as shown in documentation
-            error_message = f"Failed to parse KML: {context.exception}"
-            self.assertIn("Failed to parse KML:", error_message)
+            error_message = f"Failed to parse KML: {exc_info.value}"
+            assert "Failed to parse KML:" in error_message
         finally:
-            os.unlink(invalid_file.name)
+            invalid_path.unlink()
 
     def test_handling_parse_errors_comprehensive_example(self) -> None:
         """Test the comprehensive parse error example from kmlorm.core.exceptions.rst."""
@@ -124,27 +134,31 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #         print(f"Source: {e.source}")
 
         # Create an invalid KML file
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as invalid_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".kml", delete=False, encoding="utf-8"
+        ) as invalid_file:
             invalid_file.write("invalid xml content")
-        invalid_file.close()
+            invalid_path = Path(invalid_file.name)
 
         try:
-            with self.assertRaises(KMLParseError) as context:
-                _ = KMLFile.from_file(invalid_file.name)
+            with pytest.raises(KMLParseError) as exc_info:
+                _ = KMLFile.from_file(str(invalid_path))
 
-            e = context.exception
+            e = exc_info.value
             # Test the formatted message as shown in documentation
             parse_error_msg = f"Failed to parse KML: {e}"
-            self.assertIn("Failed to parse KML:", parse_error_msg)
+            assert "Failed to parse KML:" in parse_error_msg
 
             # Test the source attribute handling as shown in documentation
             if hasattr(e, "source") and e.source:
                 source_msg = f"Source: {e.source}"
-                self.assertIn("Source:", source_msg)
+                assert "Source:" in source_msg
         finally:
-            os.unlink(invalid_file.name)
+            invalid_path.unlink()
 
-    def test_handling_query_errors_element_not_found_basic_example(self) -> None:
+    def test_handling_query_errors_element_not_found_basic_example(
+        self, temp_kml_file: Path
+    ) -> None:
         """Test the basic KMLElementNotFound example from exceptions.rst."""
         # Example from exceptions.rst:
         # from kmlorm import KMLFile
@@ -158,20 +172,23 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         # except KMLElementNotFound:
         #     print("Store not found")
 
-        kml = KMLFile.from_file(self.temp_file.name)
-        handled: bool = False
-        with self.assertRaises(KMLElementNotFound):
+        kml = KMLFile.from_file(str(temp_kml_file))
+
+        with pytest.raises(KMLElementNotFound):
             _ = kml.placemarks.get(name="Nonexistent Store")
 
         # Test that we can catch and handle it as shown in documentation
+        handled = False
         try:
             _ = kml.placemarks.get(name="Nonexistent Store")
         except KMLElementNotFound:
             handled = True
 
-        self.assertTrue(handled)
+        assert handled
 
-    def test_handling_query_errors_multiple_elements_basic_example(self) -> None:
+    def test_handling_query_errors_multiple_elements_basic_example(
+        self, temp_kml_file: Path
+    ) -> None:
         """Test the basic KMLMultipleElementsReturned example from exceptions.rst."""
         # Example from exceptions.rst:
         # try:
@@ -180,20 +197,23 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         # except KMLMultipleElementsReturned:
         #     print("Multiple stores found, be more specific")
 
-        kml = KMLFile.from_file(self.temp_file.name)
-        handled: bool = False
-        with self.assertRaises(KMLMultipleElementsReturned):
+        kml = KMLFile.from_file(str(temp_kml_file))
+
+        with pytest.raises(KMLMultipleElementsReturned):
             _ = kml.placemarks.get(name__icontains="Capital")
 
         # Test that we can catch and handle it as shown in documentation
+        handled = False
         try:
             _ = kml.placemarks.get(name__icontains="Capital")
         except KMLMultipleElementsReturned:
             handled = True
 
-        self.assertTrue(handled)
+        assert handled
 
-    def test_handling_query_errors_comprehensive_element_not_found_example(self) -> None:
+    def test_handling_query_errors_comprehensive_element_not_found_example(
+        self, temp_kml_file: Path
+    ) -> None:
         """Test the comprehensive KMLElementNotFound example from kmlorm.core.exceptions.rst."""
         # Example from kmlorm.core.exceptions.rst:
         # kml = KMLFile.from_file('stores.kml')
@@ -205,26 +225,28 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Element type: {e.element_type}")
         #     print(f"Query: {e.query_kwargs}")
 
-        kml = KMLFile.from_file(self.temp_file.name)
+        kml = KMLFile.from_file(str(temp_kml_file))
 
-        with self.assertRaises(KMLElementNotFound) as context:
+        with pytest.raises(KMLElementNotFound) as exc_info:
             _ = kml.placemarks.all().get(name="Nonexistent Store")
 
-        e = context.exception
+        e = exc_info.value
         # Test the formatted messages as shown in documentation
         element_not_found_msg = f"Element not found: {e}"
         element_type_msg = f"Element type: {e.element_type}"
         query_msg = f"Query: {e.query_kwargs}"
 
-        self.assertIn("Element not found:", element_not_found_msg)
-        self.assertIn("Element type:", element_type_msg)
-        self.assertIn("Query:", query_msg)
+        assert "Element not found:" in element_not_found_msg
+        assert "Element type:" in element_type_msg
+        assert "Query:" in query_msg
 
         # Verify the attributes exist as documented
-        self.assertTrue(hasattr(e, "element_type"))
-        self.assertTrue(hasattr(e, "query_kwargs"))
+        assert hasattr(e, "element_type")
+        assert hasattr(e, "query_kwargs")
 
-    def test_handling_query_errors_comprehensive_multiple_elements_example(self) -> None:
+    def test_handling_query_errors_comprehensive_multiple_elements_example(
+        self, temp_kml_file: Path
+    ) -> None:
         """Test the comprehensive KMLMultipleElementsReturned example from
         kmlorm.core.exceptions.rst."""
         # Example from kmlorm.core.exceptions.rst:
@@ -236,27 +258,27 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Count: {e.count}")
         #     print(f"Query: {e.query_kwargs}")
 
-        kml = KMLFile.from_file(self.temp_file.name)
+        kml = KMLFile.from_file(str(temp_kml_file))
 
-        with self.assertRaises(KMLMultipleElementsReturned) as context:
+        with pytest.raises(KMLMultipleElementsReturned) as exc_info:
             _ = kml.placemarks.all().get(name__icontains="Store")
 
-        e = context.exception
+        e = exc_info.value
         # Test the formatted messages as shown in documentation
         multiple_elements_msg = f"Multiple elements found: {e}"
         element_type_msg = f"Element type: {e.element_type}"
         count_msg = f"Count: {e.count}"
         query_msg = f"Query: {e.query_kwargs}"
 
-        self.assertIn("Multiple elements found:", multiple_elements_msg)
-        self.assertIn("Element type:", element_type_msg)
-        self.assertIn("Count:", count_msg)
-        self.assertIn("Query:", query_msg)
+        assert "Multiple elements found:" in multiple_elements_msg
+        assert "Element type:" in element_type_msg
+        assert "Count:" in count_msg
+        assert "Query:" in query_msg
 
         # Verify the attributes exist as documented
-        self.assertTrue(hasattr(e, "element_type"))
-        self.assertTrue(hasattr(e, "count"))
-        self.assertTrue(hasattr(e, "query_kwargs"))
+        assert hasattr(e, "element_type")
+        assert hasattr(e, "count")
+        assert hasattr(e, "query_kwargs")
 
     def test_handling_validation_errors_basic_example(self) -> None:
         """Test the basic validation error example from exceptions.rst."""
@@ -272,18 +294,18 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Field: {e.field}")
         #     print(f"Value: {e.value}")
 
-        with self.assertRaises(KMLValidationError) as context:
+        with pytest.raises(KMLValidationError) as exc_info:
             _ = Coordinate(longitude=200, latitude=100)
 
-        e = context.exception
+        e = exc_info.value
         # Test the formatted messages as shown in documentation
         validation_msg = f"Validation failed: {e}"
         field_msg = f"Field: {e.field}" if hasattr(e, "field") else "Field: N/A"
         value_msg = f"Value: {e.value}" if hasattr(e, "value") else "Value: N/A"
 
-        self.assertIn("Validation failed:", validation_msg)
-        self.assertIn("Field:", field_msg)
-        self.assertIn("Value:", value_msg)
+        assert "Validation failed:" in validation_msg
+        assert "Field:" in field_msg
+        assert "Value:" in value_msg
 
     def test_handling_validation_errors_comprehensive_example(self) -> None:
         """Test the comprehensive validation error example from kmlorm.core.exceptions.rst."""
@@ -301,24 +323,24 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     if hasattr(e, 'value'):
         #         print(f"Value: {e.value}")
 
-        with self.assertRaises(KMLValidationError) as context:
+        with pytest.raises(KMLValidationError) as exc_info:
             _ = Coordinate(longitude=200, latitude=100)
 
-        e = context.exception
+        e = exc_info.value
         # Test the formatted message as shown in documentation
         validation_error_msg = f"Validation error: {e}"
-        self.assertIn("Validation error:", validation_error_msg)
+        assert "Validation error:" in validation_error_msg
 
         # Test the conditional attribute access as shown in documentation
         if hasattr(e, "field"):
             field_msg = f"Field: {e.field}"
-            self.assertIn("Field:", field_msg)
+            assert "Field:" in field_msg
 
         if hasattr(e, "value"):
             value_msg = f"Value: {e.value}"
-            self.assertIn("Value:", value_msg)
+            assert "Value:" in value_msg
 
-    def test_best_practices_logging_example(self) -> None:
+    def test_best_practices_logging_example(self, temp_kml_file: Path) -> None:
         """Test the best practices logging example from exceptions.rst."""
         # Example from exceptions.rst:
         # import logging
@@ -344,7 +366,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
 
         logger = logging.getLogger(__name__)
 
-        def load_kml_safely(file_path: str) -> "Optional[KMLFile]":
+        def load_kml_safely(file_path: str) -> Optional[KMLFile]:
             try:
                 return KMLFile.from_file(file_path)
             except KMLParseError as e:
@@ -360,27 +382,29 @@ class TestExceptionsDocsExamples(unittest.TestCase):
                 raise RuntimeError(f"Failed to load KML file: {file_path}") from e
 
         # Test with valid file - should work
-        result = load_kml_safely(self.temp_file.name)
-        self.assertIsInstance(result, KMLFile)
+        result = load_kml_safely(str(temp_kml_file))
+        assert isinstance(result, KMLFile)
 
         # Test with invalid file - should raise ValueError
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as invalid_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".kml", delete=False, encoding="utf-8"
+        ) as invalid_file:
             invalid_file.write("invalid xml")
-        invalid_file.close()
+            invalid_path = Path(invalid_file.name)
 
         try:
-            with self.assertRaises(ValueError) as context:
-                load_kml_safely(invalid_file.name)
+            with pytest.raises(ValueError) as exc_info:
+                load_kml_safely(str(invalid_path))
 
-            self.assertIn("Invalid KML file:", str(context.exception))
+            assert "Invalid KML file:" in str(exc_info.value)
         finally:
-            os.unlink(invalid_file.name)
+            invalid_path.unlink()
 
         # Test with non-existent file - should raise RuntimeError
-        with self.assertRaises(RuntimeError) as runtime_context:
+        with pytest.raises(RuntimeError) as runtime_exc_info:
             load_kml_safely("nonexistent.kml")
 
-        self.assertIn("Failed to load KML file:", str(runtime_context.exception))
+        assert "Failed to load KML file:" in str(runtime_exc_info.value)
 
     def test_error_context_validation_error_example(self) -> None:
         """Test the error context validation error example from exceptions.rst."""
@@ -396,20 +420,20 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Value: {e.value if hasattr(e, 'value') else 'N/A'}")
         #     print(f"Message: {str(e)}")
 
-        with self.assertRaises(KMLValidationError) as context:
+        with pytest.raises(KMLValidationError) as exc_info:
             _ = Coordinate(longitude=200, latitude=100)
 
-        e = context.exception
+        e = exc_info.value
         # Test the formatted messages as shown in documentation
         field_msg = f"Field: {e.field if hasattr(e, 'field') else 'N/A'}"
         value_msg = f"Value: {e.value if hasattr(e, 'value') else 'N/A'}"
         message_msg = f"Message: {str(e)}"
 
-        self.assertIn("Field:", field_msg)
-        self.assertIn("Value:", value_msg)
-        self.assertIn("Message:", message_msg)
+        assert "Field:" in field_msg
+        assert "Value:" in value_msg
+        assert "Message:" in message_msg
 
-    def test_error_context_element_not_found_attributes_example(self) -> None:
+    def test_error_context_element_not_found_attributes_example(self, temp_kml_file: Path) -> None:
         """Test the KMLElementNotFound attributes example from exceptions.rst."""
         # Example from exceptions.rst:
         # # Exception attributes available for KMLElementNotFound:
@@ -419,24 +443,24 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Element type: {e.element_type}")
         #     print(f"Query: {e.query_kwargs}")
 
-        kml = KMLFile.from_file(self.temp_file.name)
+        kml = KMLFile.from_file(str(temp_kml_file))
 
-        with self.assertRaises(KMLElementNotFound) as context:
+        with pytest.raises(KMLElementNotFound) as exc_info:
             kml.placemarks.get(name="Missing")
 
-        e = context.exception
+        e = exc_info.value
         # Test the attribute access as shown in documentation
         element_type_msg = f"Element type: {e.element_type}"
         query_msg = f"Query: {e.query_kwargs}"
 
-        self.assertIn("Element type:", element_type_msg)
-        self.assertIn("Query:", query_msg)
+        assert "Element type:" in element_type_msg
+        assert "Query:" in query_msg
 
         # Verify the attributes are accessible
-        self.assertTrue(hasattr(e, "element_type"))
-        self.assertTrue(hasattr(e, "query_kwargs"))
+        assert hasattr(e, "element_type")
+        assert hasattr(e, "query_kwargs")
 
-    def test_error_context_multiple_elements_attributes_example(self) -> None:
+    def test_error_context_multiple_elements_attributes_example(self, temp_kml_file: Path) -> None:
         """Test the KMLMultipleElementsReturned attributes example from exceptions.rst."""
         # Example from exceptions.rst:
         # # Exception attributes available for KMLMultipleElementsReturned:
@@ -447,27 +471,29 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     print(f"Count found: {e.count}")
         #     print(f"Query: {e.query_kwargs}")
 
-        kml = KMLFile.from_file(self.temp_file.name)
+        kml = KMLFile.from_file(str(temp_kml_file))
 
-        with self.assertRaises(KMLMultipleElementsReturned) as context:
+        with pytest.raises(KMLMultipleElementsReturned) as exc_info:
             kml.placemarks.get(name__icontains="Store")
 
-        e = context.exception
+        e = exc_info.value
         # Test the attribute access as shown in documentation
         element_type_msg = f"Element type: {e.element_type}"
         count_msg = f"Count found: {e.count}"
         query_msg = f"Query: {e.query_kwargs}"
 
-        self.assertIn("Element type:", element_type_msg)
-        self.assertIn("Count found:", count_msg)
-        self.assertIn("Query:", query_msg)
+        assert "Element type:" in element_type_msg
+        assert "Count found:" in count_msg
+        assert "Query:" in query_msg
 
         # Verify the attributes are accessible
-        self.assertTrue(hasattr(e, "element_type"))
-        self.assertTrue(hasattr(e, "count"))
-        self.assertTrue(hasattr(e, "query_kwargs"))
+        assert hasattr(e, "element_type")
+        assert hasattr(e, "count")
+        assert hasattr(e, "query_kwargs")
 
-    def test_best_practices_catch_specific_exceptions_first_example(self) -> None:
+    def test_best_practices_catch_specific_exceptions_first_example(
+        self, temp_kml_file: Path
+    ) -> None:
         """Test the catch specific exceptions first example from kmlorm.core.exceptions.rst."""
         # Example from kmlorm.core.exceptions.rst:
         # try:
@@ -482,7 +508,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         #     # Handle any other KML ORM exception
         #     pass
 
-        kml = KMLFile.from_file(self.temp_file.name)
+        kml = KMLFile.from_file(str(temp_kml_file))
 
         # Test element not found case
         not_found_handled = False
@@ -495,7 +521,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         except KMLOrmException:
             pass
 
-        self.assertTrue(not_found_handled)
+        assert not_found_handled
 
         # Test multiple elements returned case
         multiple_handled = False
@@ -508,7 +534,7 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         except KMLOrmException:
             pass
 
-        self.assertTrue(multiple_handled)
+        assert multiple_handled
 
     def test_best_practices_use_exception_context_example(self) -> None:
         """Test the use exception context example from kmlorm.core.exceptions.rst."""
@@ -528,15 +554,18 @@ class TestExceptionsDocsExamples(unittest.TestCase):
             except KMLValidationError as e:
                 # Use exception attributes for detailed error reporting as shown in docs
                 logger.error(
-                    "Validation failed for field %s with value %s: %s", e.field, e.value, e
+                    "Validation failed for field %s with value %s: %s",
+                    getattr(e, "field", "unknown"),
+                    getattr(e, "value", "unknown"),
+                    e,
                 )
 
-            # Verify logger.error was called (even if attributes might not exist)
+            # Verify logger.error was called
             mock_error.assert_called_once()
             call_args = mock_error.call_args[0][0]  # Get the first argument to logger.error
-            self.assertIn("Validation failed for field", call_args)
+            assert "Validation failed for field" in call_args
 
-    def test_best_practices_chain_exception_handling_example(self) -> None:
+    def test_best_practices_chain_exception_handling_example(self, temp_kml_file: Path) -> None:
         """Test the chain exception handling example from kmlorm.core.exceptions.rst."""
         # Example from kmlorm.core.exceptions.rst:
         # def safe_load_kml(file_path):
@@ -556,31 +585,33 @@ class TestExceptionsDocsExamples(unittest.TestCase):
                 raise ValueError(f"KML file not found: {file_path}") from e
 
         # Test with valid file
-        result = safe_load_kml(self.temp_file.name)
-        self.assertIsInstance(result, KMLFile)
+        result = safe_load_kml(str(temp_kml_file))
+        assert isinstance(result, KMLFile)
 
         # Test with invalid KML
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".kml", delete=False) as invalid_file:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".kml", delete=False, encoding="utf-8"
+        ) as invalid_file:
             invalid_file.write("invalid xml")
-        invalid_file.close()
+            invalid_path = Path(invalid_file.name)
 
         try:
-            with self.assertRaises(ValueError) as context:
-                safe_load_kml(invalid_file.name)
+            with pytest.raises(ValueError) as exc_info:
+                safe_load_kml(str(invalid_path))
 
-            self.assertIn("Invalid KML file:", str(context.exception))
+            assert "Invalid KML file:" in str(exc_info.value)
             # Verify the exception was chained
-            self.assertIsInstance(context.exception.__cause__, KMLParseError)
+            assert isinstance(exc_info.value.__cause__, KMLParseError)
         finally:
-            os.unlink(invalid_file.name)
+            invalid_path.unlink()
 
         # Test with non-existent file
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as exc_info:
             safe_load_kml("nonexistent_file.kml")
 
-        self.assertIn("KML file not found:", str(context.exception))
+        assert "KML file not found:" in str(exc_info.value)
         # Verify the exception was chained
-        self.assertIsInstance(context.exception.__cause__, FileNotFoundError)
+        assert isinstance(exc_info.value.__cause__, FileNotFoundError)
 
     def test_importing_exceptions_main_package_example(self) -> None:
         """Test the importing exceptions from main package example from
@@ -608,20 +639,20 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         )
 
         # Verify all the exceptions can be imported from main package
-        self.assertEqual(MainKMLOrmException.__name__, "KMLOrmException")
-        self.assertEqual(MainKMLParseError.__name__, "KMLParseError")
-        self.assertEqual(MainKMLValidationError.__name__, "KMLValidationError")
-        self.assertEqual(MainKMLElementNotFound.__name__, "KMLElementNotFound")
-        self.assertEqual(MainKMLMultipleElementsReturned.__name__, "KMLMultipleElementsReturned")
-        self.assertEqual(MainKMLInvalidCoordinates.__name__, "KMLInvalidCoordinates")
+        assert MainKMLOrmException.__name__ == "KMLOrmException"
+        assert MainKMLParseError.__name__ == "KMLParseError"
+        assert MainKMLValidationError.__name__ == "KMLValidationError"
+        assert MainKMLElementNotFound.__name__ == "KMLElementNotFound"
+        assert MainKMLMultipleElementsReturned.__name__ == "KMLMultipleElementsReturned"
+        assert MainKMLInvalidCoordinates.__name__ == "KMLInvalidCoordinates"
 
         # Verify they are the same classes as the ones we imported at module level
-        self.assertIs(MainKMLOrmException, KMLOrmException)
-        self.assertIs(MainKMLParseError, KMLParseError)
-        self.assertIs(MainKMLValidationError, KMLValidationError)
-        self.assertIs(MainKMLElementNotFound, KMLElementNotFound)
-        self.assertIs(MainKMLMultipleElementsReturned, KMLMultipleElementsReturned)
-        self.assertIs(MainKMLInvalidCoordinates, KMLInvalidCoordinates)
+        assert MainKMLOrmException is KMLOrmException
+        assert MainKMLParseError is KMLParseError
+        assert MainKMLValidationError is KMLValidationError
+        assert MainKMLElementNotFound is KMLElementNotFound
+        assert MainKMLMultipleElementsReturned is KMLMultipleElementsReturned
+        assert MainKMLInvalidCoordinates is KMLInvalidCoordinates
 
     def test_importing_exceptions_direct_module_example(self) -> None:
         """Test the importing exceptions directly from module example from
@@ -651,22 +682,22 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         )
 
         # Verify all the exceptions can be imported directly from the module
-        self.assertEqual(DirectKMLOrmException.__name__, "KMLOrmException")
-        self.assertEqual(DirectKMLParseError.__name__, "KMLParseError")
-        self.assertEqual(DirectKMLValidationError.__name__, "KMLValidationError")
-        self.assertEqual(DirectKMLElementNotFound.__name__, "KMLElementNotFound")
-        self.assertEqual(DirectKMLMultipleElementsReturned.__name__, "KMLMultipleElementsReturned")
-        self.assertEqual(DirectKMLInvalidCoordinates.__name__, "KMLInvalidCoordinates")
-        self.assertEqual(DirectKMLQueryError.__name__, "KMLQueryError")
+        assert DirectKMLOrmException.__name__ == "KMLOrmException"
+        assert DirectKMLParseError.__name__ == "KMLParseError"
+        assert DirectKMLValidationError.__name__ == "KMLValidationError"
+        assert DirectKMLElementNotFound.__name__ == "KMLElementNotFound"
+        assert DirectKMLMultipleElementsReturned.__name__ == "KMLMultipleElementsReturned"
+        assert DirectKMLInvalidCoordinates.__name__ == "KMLInvalidCoordinates"
+        assert DirectKMLQueryError.__name__ == "KMLQueryError"
 
         # Verify they are the same classes as the ones we imported at module level
-        self.assertIs(DirectKMLOrmException, KMLOrmException)
-        self.assertIs(DirectKMLParseError, KMLParseError)
-        self.assertIs(DirectKMLValidationError, KMLValidationError)
-        self.assertIs(DirectKMLElementNotFound, KMLElementNotFound)
-        self.assertIs(DirectKMLMultipleElementsReturned, KMLMultipleElementsReturned)
-        self.assertIs(DirectKMLInvalidCoordinates, KMLInvalidCoordinates)
-        self.assertIs(DirectKMLQueryError, KMLQueryError)
+        assert DirectKMLOrmException is KMLOrmException
+        assert DirectKMLParseError is KMLParseError
+        assert DirectKMLValidationError is KMLValidationError
+        assert DirectKMLElementNotFound is KMLElementNotFound
+        assert DirectKMLMultipleElementsReturned is KMLMultipleElementsReturned
+        assert DirectKMLInvalidCoordinates is KMLInvalidCoordinates
+        assert DirectKMLQueryError is KMLQueryError
 
         # Note: KMLQueryError is only available in direct import, not from main package
 
@@ -675,23 +706,19 @@ class TestExceptionsDocsExamples(unittest.TestCase):
         # Documentation states that all exceptions inherit from KMLOrmException
 
         # Test KMLParseError inheritance
-        self.assertTrue(issubclass(KMLParseError, KMLOrmException))
+        assert issubclass(KMLParseError, KMLOrmException)
 
         # Test KMLValidationError inheritance
-        self.assertTrue(issubclass(KMLValidationError, KMLOrmException))
+        assert issubclass(KMLValidationError, KMLOrmException)
 
         # Test KMLElementNotFound inheritance
-        self.assertTrue(issubclass(KMLElementNotFound, KMLOrmException))
+        assert issubclass(KMLElementNotFound, KMLOrmException)
 
         # Test KMLMultipleElementsReturned inheritance
-        self.assertTrue(issubclass(KMLMultipleElementsReturned, KMLOrmException))
+        assert issubclass(KMLMultipleElementsReturned, KMLOrmException)
 
         # Test KMLInvalidCoordinates inheritance
-        self.assertTrue(issubclass(KMLInvalidCoordinates, KMLOrmException))
+        assert issubclass(KMLInvalidCoordinates, KMLOrmException)
 
         # Test KMLQueryError inheritance
-        self.assertTrue(issubclass(KMLQueryError, KMLOrmException))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert issubclass(KMLQueryError, KMLOrmException)

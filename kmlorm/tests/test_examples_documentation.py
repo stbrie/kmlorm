@@ -5,10 +5,6 @@ This module contains tests that verify all code examples from the
 examples.rst documentation work correctly.
 """
 
-import csv
-import json
-import os
-import tempfile
 from typing import List, Dict, Any, TYPE_CHECKING, cast
 
 from ..core.exceptions import KMLValidationError
@@ -293,88 +289,55 @@ class TestExamplesDocumentation:
         # Should find missing coordinates
         assert "Store Without Coordinates" in report["missing_coordinates"]
 
-    def test_data_export_csv(self) -> None:
-        """Test CSV export example."""
-        # From examples.rst: Data Export and Conversion section
+    def test_data_access_with_to_dict(self) -> None:
+        """Test data access with to_dict() methods example from lines 202-241."""
+        # From examples.rst: Data Access with to_dict() Methods section
         kml = KMLFile.from_string(self.comprehensive_kml)
 
-        def export_to_csv_data(kml_file: KMLFile) -> List[Dict[str, Any]]:
-            """Export placemark data to CSV format."""
-            data = []
-            for placemark in kml_file.placemarks.all():
-                row = {
-                    "name": placemark.name or "",
-                    "description": placemark.description or "",
-                    "longitude": placemark.longitude or "",
-                    "latitude": placemark.latitude or "",
-                    "altitude": placemark.altitude or "",
-                    "address": placemark.address or "",
-                }
-                data.append(row)
-            return data
+        # Test converting individual placemarks to dictionaries
+        for placemark in kml.placemarks.has_coordinates():
+            placemark_dict = placemark.to_dict()
+            print(f"Placemark: {placemark_dict['name']}")
+            print(f"Coordinates: {placemark_dict['coordinates']}")
+            print(f"Point data: {placemark_dict['point']}")
 
-        # Test CSV data generation
-        csv_data = export_to_csv_data(kml)
+            # Verify the dictionary structure
+            assert 'name' in placemark_dict
+            assert 'coordinates' in placemark_dict
+            assert 'point' in placemark_dict
 
-        assert len(csv_data) > 0
-        assert all("name" in row for row in csv_data)
-        assert all("longitude" in row for row in csv_data)
+        # Convert all placemarks to a list of dictionaries
+        all_placemarks = [p.to_dict() for p in kml.placemarks.all()]
+        print(f"Converted {len(all_placemarks)} placemarks to dictionaries")
+        assert len(all_placemarks) > 0
 
-        # Test actual CSV writing
-        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".csv") as f:
-            fieldnames = ["name", "description", "longitude", "latitude", "altitude", "address"]
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(csv_data)
-            csv_path = f.name
+        # Access coordinate data
+        for placemark in kml.placemarks.has_coordinates():
+            if placemark.point is not None:
+                point_dict = placemark.point.to_dict()
+                if placemark.point.coordinates is not None:
+                    coord_dict = placemark.point.coordinates.to_dict()
 
-        # Verify CSV file was created
-        assert os.path.exists(csv_path)
+                    print(f"Point: {point_dict}")
+                    print(f"Coordinates: {coord_dict}")
 
-        # Clean up
-        os.unlink(csv_path)
+                    # Verify point and coordinate dictionaries
+                    assert isinstance(point_dict, dict)
+                    assert isinstance(coord_dict, dict)
+                    assert 'longitude' in coord_dict
+                    assert 'latitude' in coord_dict
 
-    def test_data_export_geojson(self) -> None:
-        """Test GeoJSON export example."""
-        # From examples.rst: Data Export and Conversion section
-        kml = KMLFile.from_string(self.comprehensive_kml)
+        # Verify we have dictionaries with the right structure
+        # No need to test JSON/CSV export - we don't provide export functionality
+        for placemark_dict in all_placemarks:
+            assert isinstance(placemark_dict, dict)
+            # Verify essential keys exist
+            assert 'name' in placemark_dict
+            if placemark_dict.get('point'):
+                assert 'coordinates' in placemark_dict
+                # Coordinates should be in the dict (even if as an object)
+                assert placemark_dict['coordinates'] is not None
 
-        def export_to_geojson_data(kml_file: KMLFile) -> Dict[str, Any]:
-            """Export placemark data to GeoJSON."""
-            features = []
-            for placemark in kml_file.placemarks.has_coordinates():
-                feature = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [placemark.longitude, placemark.latitude],
-                    },
-                    "properties": {
-                        "name": placemark.name,
-                        "description": placemark.description,
-                        "address": placemark.address,
-                    },
-                }
-                features.append(feature)
-
-            geojson = {"type": "FeatureCollection", "features": features}
-            return geojson
-
-        # Test GeoJSON generation
-        geojson_data = export_to_geojson_data(kml)
-
-        assert geojson_data["type"] == "FeatureCollection"
-        assert len(geojson_data["features"]) > 0
-
-        for feature in geojson_data["features"]:
-            assert feature["type"] == "Feature"
-            assert "geometry" in feature
-            assert "properties" in feature
-            assert feature["geometry"]["type"] == "Point"
-
-        # Test JSON serialization
-        json_str = json.dumps(geojson_data, indent=2)
-        assert len(json_str) > 0
 
     def test_spatial_analysis_clusters(self) -> None:
         """Test spatial clustering analysis example."""

@@ -140,6 +140,40 @@ class TestIndexDocsExamples:
             if hasattr(place, "visibility") and place.visibility is not None:
                 assert place.visibility is True
 
+    def test_exact_hierarchical_querying_code_block(self) -> None:
+        """Test the exact 'Hierarchical Querying' code block from index.rst lines 69-80."""
+        # Setup
+        # pylint: disable=import-outside-toplevel
+        from kmlorm import KMLFile
+
+        kml = KMLFile.from_file(self.places_kml_file)
+
+        # EXACT CODE FROM index.rst: Hierarchical Querying section
+        # Get only direct children (root-level placemarks)
+        root_placemarks = kml.placemarks.children()
+
+        # Get ALL placemarks including nested ones
+        all_placemarks = kml.placemarks.all()
+
+        # Same pattern works for folders
+        root_folders = kml.folders.children()
+        all_folders = kml.folders.all()
+
+        # Verify the code worked
+        assert hasattr(root_placemarks, "__iter__")
+        assert hasattr(all_placemarks, "__iter__")
+        assert hasattr(root_folders, "__iter__")
+        assert hasattr(all_folders, "__iter__")
+
+        # Verify the hierarchical difference exists
+        root_placemark_count = len(list(root_placemarks))
+        all_placemark_count = len(list(all_placemarks))
+        assert all_placemark_count >= root_placemark_count
+
+        root_folder_count = len(list(root_folders))
+        all_folder_count = len(list(all_folders))
+        assert all_folder_count >= root_folder_count
+
     def test_all_imports_work_as_documented(self) -> None:
         """Test that all imports shown in index.rst work correctly."""
         # EXACT CODE FROM index.rst: Quick Example section

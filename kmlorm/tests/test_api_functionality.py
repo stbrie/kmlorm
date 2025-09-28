@@ -8,7 +8,6 @@ with the new simplified API design.
 # pylint: disable=duplicate-code, too-many-public-methods
 
 import time
-
 from kmlorm import KMLFile
 
 

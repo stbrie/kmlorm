@@ -13,7 +13,6 @@ class SpatialCalculationError(Exception):
     Raised when spatial calculations encounter errors that cannot be handled
     gracefully, such as mathematical errors or invalid geometric configurations.
     """
-    pass
 
 
 class InvalidCoordinateError(SpatialCalculationError):
@@ -33,7 +32,6 @@ class InvalidCoordinateError(SpatialCalculationError):
         ... except InvalidCoordinateError as e:
         ...     print(f"Invalid coordinate: {e}")
     """
-    pass
 
 
 class InsufficientDataError(SpatialCalculationError):
@@ -55,4 +53,3 @@ class InsufficientDataError(SpatialCalculationError):
         ... except InsufficientDataError as e:
         ...     print(f"Cannot calculate: {e}")
     """
-    pass

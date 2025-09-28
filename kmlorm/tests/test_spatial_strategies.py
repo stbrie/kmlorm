@@ -5,18 +5,15 @@ This module tests the different distance calculation strategies available
 in the spatial module, comparing their accuracy and performance characteristics.
 """
 
+import time
 import pytest
-import math
-from typing import List, Tuple
 
 from kmlorm.spatial.strategies import (
     HaversineStrategy,
     VincentyStrategy,
     EuclideanApproximation,
     AdaptiveStrategy,
-    DistanceStrategy
 )
-from kmlorm.spatial.constants import EARTH_RADIUS_MEAN_KM
 
 
 class TestDistanceStrategies:
@@ -33,7 +30,7 @@ class TestDistanceStrategies:
         (90, 0, -90, 0, 20003.9, 50),  # Pole to pole
     ]
 
-    def test_haversine_strategy_known_distances(self):
+    def test_haversine_strategy_known_distances(self) -> None:
         """Test Haversine strategy against known distances."""
         strategy = HaversineStrategy()
 
@@ -44,7 +41,7 @@ class TestDistanceStrategies:
                 f"for ({lat1}, {lon1}) to ({lat2}, {lon2})"
             )
 
-    def test_haversine_strategy_properties(self):
+    def test_haversine_strategy_properties(self) -> None:
         """Test mathematical properties of Haversine strategy."""
         strategy = HaversineStrategy()
 
@@ -63,7 +60,7 @@ class TestDistanceStrategies:
         d_ac = strategy.calculate(0, 0, 1, 1)
         assert (d_ab + d_bc) >= d_ac * 0.99  # Allow small numerical error
 
-    def test_vincenty_strategy_accuracy(self):
+    def test_vincenty_strategy_accuracy(self) -> None:
         """Test Vincenty strategy for high accuracy."""
         vincenty = VincentyStrategy()
         haversine = HaversineStrategy()
@@ -84,7 +81,7 @@ class TestDistanceStrategies:
                 f"for short distance ({lat1}, {lon1}) to ({lat2}, {lon2})"
             )
 
-    def test_vincenty_strategy_convergence(self):
+    def test_vincenty_strategy_convergence(self) -> None:
         """Test Vincenty strategy convergence behavior."""
         strategy = VincentyStrategy(max_iterations=10, tolerance=1e-6)
 
@@ -97,7 +94,7 @@ class TestDistanceStrategies:
         strict_distance = strict_strategy.calculate(0, 0, 1, 1)
         assert strict_distance > 0
 
-    def test_vincenty_fallback_to_haversine(self):
+    def test_vincenty_fallback_to_haversine(self) -> None:
         """Test that Vincenty falls back to Haversine for non-convergent cases."""
         # Use very low iteration limit to force fallback
         strategy = VincentyStrategy(max_iterations=1, tolerance=1e-15)
@@ -110,7 +107,7 @@ class TestDistanceStrategies:
         # Should fall back to Haversine result
         assert v_dist == pytest.approx(h_dist, rel=1e-6)
 
-    def test_euclidean_approximation_accuracy(self):
+    def test_euclidean_approximation_accuracy(self) -> None:
         """Test Euclidean approximation accuracy for small distances."""
         euclidean = EuclideanApproximation()
         haversine = HaversineStrategy()
@@ -133,7 +130,7 @@ class TestDistanceStrategies:
                 f"for small distance: Euclidean {e_dist:.3f}km vs Haversine {h_dist:.3f}km"
             )
 
-    def test_euclidean_approximation_degradation(self):
+    def test_euclidean_approximation_degradation(self) -> None:
         """Test that Euclidean approximation degrades gracefully for large distances."""
         euclidean = EuclideanApproximation()
         haversine = HaversineStrategy()
@@ -146,11 +143,11 @@ class TestDistanceStrategies:
 
         # Euclidean may over or underestimate, but should be in reasonable ballpark
         error_percent = abs(e_dist - h_dist) / h_dist * 100
-        assert error_percent < 50, (
-            f"Euclidean error {error_percent:.1f}% should not exceed 50% even for large distances"
-        )
+        assert (
+            error_percent < 50
+        ), f"Euclidean error {error_percent:.1f}% should not exceed 50% even for large distances"
 
-    def test_adaptive_strategy_selection(self):
+    def test_adaptive_strategy_selection(self) -> None:
         """Test that adaptive strategy selects appropriate algorithms."""
         adaptive_fast = AdaptiveStrategy(high_accuracy=False)
         adaptive_accurate = AdaptiveStrategy(high_accuracy=True)
@@ -177,7 +174,7 @@ class TestDistanceStrategies:
         # But should be within reasonable bounds
         assert abs(large_dist_fast - large_dist_accurate) / large_dist_fast < 0.01
 
-    def test_strategy_coordinate_validation(self):
+    def test_strategy_coordinate_validation(self) -> None:
         """Test that strategies validate coordinate ranges."""
         strategy = HaversineStrategy()
 
@@ -199,7 +196,7 @@ class TestDistanceStrategies:
         with pytest.raises(ValueError, match="Longitude must be between"):
             strategy.calculate(0, -181, 0, 0)  # Longitude < -180
 
-    def test_all_strategies_consistent_for_same_point(self):
+    def test_all_strategies_consistent_for_same_point(self) -> None:
         """Test that all strategies return 0 for distance to same point."""
         strategies = [
             HaversineStrategy(),
@@ -220,13 +217,12 @@ class TestDistanceStrategies:
         for strategy in strategies:
             for lat, lon in test_points:
                 distance = strategy.calculate(lat, lon, lat, lon)
-                assert distance == pytest.approx(0, abs=1e-6), (
-                    f"{strategy.__class__.__name__} should return 0 for same point ({lat}, {lon})"
-                )
+                assert distance == pytest.approx(
+                    0, abs=1e-6
+                ), f"{strategy.__class__.__name__} should return 0 for same point ({lat}, {lon})"
 
-    def test_strategy_performance_ordering(self):
+    def test_strategy_performance_ordering(self) -> None:
         """Test relative performance characteristics of strategies."""
-        import time
 
         strategies = [
             ("Euclidean", EuclideanApproximation()),
@@ -248,7 +244,7 @@ class TestDistanceStrategies:
         assert times["Euclidean"] <= times["Haversine"], "Euclidean should be faster than Haversine"
         assert times["Haversine"] <= times["Vincenty"], "Haversine should be faster than Vincenty"
 
-    def test_strategy_extreme_coordinates(self):
+    def test_strategy_extreme_coordinates(self) -> None:
         """Test strategies with extreme but valid coordinates."""
         # Separate strategies by their expected accuracy
         accurate_strategies = [
@@ -271,21 +267,29 @@ class TestDistanceStrategies:
             for lat1, lon1, lat2, lon2 in extreme_cases:
                 try:
                     distance = strategy.calculate(lat1, lon1, lat2, lon2)
-                    assert distance >= 0, f"{strategy.__class__.__name__} returned negative distance"
-                    assert distance <= 20100, f"{strategy.__class__.__name__} returned impossible distance {distance}km"
-                except Exception as e:
+                    assert (
+                        distance >= 0
+                    ), f"{strategy.__class__.__name__} returned negative distance"
+                    assert (
+                        distance <= 20100
+                    ), f"{strategy.__class__.__name__} returned impossible distance {distance}km"
+                except Exception as e:  # pylint: disable=broad-exception-caught
                     pytest.fail(f"{strategy.__class__.__name__} failed on extreme coordinates: {e}")
 
-        # Test EuclideanApproximation separately - it's expected to be inaccurate for large distances
+        # Test EuclideanApproximation separately - it's expected to be
+        # inaccurate for large distances
         for lat1, lon1, lat2, lon2 in extreme_cases:
             try:
                 distance = euclidean.calculate(lat1, lon1, lat2, lon2)
-                assert distance >= 0, f"EuclideanApproximation returned negative distance"
-                # Don't enforce maximum distance for Euclidean - it's expected to be wrong for large distances
-            except Exception as e:
-                pytest.fail(f"EuclideanApproximation failed to calculate (should at least not crash): {e}")
+                assert distance >= 0, "EuclideanApproximation returned negative distance"
+                # Don't enforce maximum distance for Euclidean - it's
+                # expected to be wrong for large distances
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                pytest.fail(
+                    f"EuclideanApproximation failed to calculate (should at least not crash): {e}"
+                )
 
-    def test_strategy_date_line_handling(self):
+    def test_strategy_date_line_handling(self) -> None:
         """Test proper handling of date line crossing."""
         # Separate strategies by their expected accuracy for date line crossing
         accurate_strategies = [
@@ -313,9 +317,11 @@ class TestDistanceStrategies:
         euclidean_distance = euclidean.calculate(lat1, lon1, lat2, lon2)
         # Just verify it doesn't crash and returns a positive number
         # (EuclideanApproximation is not expected to handle date line correctly)
-        assert euclidean_distance >= 0, "EuclideanApproximation should at least return a positive distance"
+        assert (
+            euclidean_distance >= 0
+        ), "EuclideanApproximation should at least return a positive distance"
 
-    def test_adaptive_strategy_thresholds(self):
+    def test_adaptive_strategy_thresholds(self) -> None:
         """Test that adaptive strategy respects distance thresholds."""
         adaptive = AdaptiveStrategy(high_accuracy=True)
         euclidean = EuclideanApproximation()

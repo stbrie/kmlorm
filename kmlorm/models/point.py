@@ -7,9 +7,13 @@ Placemarks that contain Point geometries.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union, TYPE_CHECKING, cast
 from ..core.exceptions import KMLValidationError
 from .base import KMLElement
+
+if TYPE_CHECKING:
+    from ..spatial.calculations import DistanceUnit
+    from .placemark import Placemark
 
 
 @dataclass(frozen=True)
@@ -163,7 +167,7 @@ class Coordinate:
         """
         return {"longitude": self.longitude, "latitude": self.latitude, "altitude": self.altitude}
 
-    def get_coordinates(self) -> Optional['Coordinate']:
+    def get_coordinates(self) -> Optional["Coordinate"]:
         """
         Return self as the coordinate representation.
 
@@ -177,8 +181,8 @@ class Coordinate:
 
     def distance_to(
         self,
-        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list],
-        unit: Optional['DistanceUnit'] = None
+        other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list],
+        unit: Optional["DistanceUnit"] = None,
     ) -> Optional[float]:
         """
         Calculate distance to another spatial object.
@@ -200,14 +204,16 @@ class Coordinate:
             >>> from kmlorm.spatial import DistanceUnit
             >>> distance_miles = coord1.distance_to(coord2, unit=DistanceUnit.MILES)
         """
+        # pylint: disable=import-outside-toplevel
         from ..spatial.calculations import SpatialCalculations, DistanceUnit
+
         if unit is None:
             unit = DistanceUnit.KILOMETERS
-        return SpatialCalculations.distance_between(self, other, unit)
+        result = SpatialCalculations.distance_between(self, other, unit)
+        return cast(Optional[float], result)
 
     def bearing_to(
-        self,
-        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
+        self, other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list]
     ) -> Optional[float]:
         """
         Calculate bearing to another spatial object.
@@ -225,13 +231,15 @@ class Coordinate:
             >>> bearing = coord1.bearing_to(coord2)
             >>> print(f"Bearing: {bearing:.1f}°")  # Should be ~90°
         """
+        # pylint: disable=import-outside-toplevel
         from ..spatial.calculations import SpatialCalculations
-        return SpatialCalculations.bearing_between(self, other)
+
+        result = SpatialCalculations.bearing_between(self, other)
+        return cast(Optional[float], result)
 
     def midpoint_to(
-        self,
-        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
-    ) -> Optional['Coordinate']:
+        self, other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list]
+    ) -> Optional["Coordinate"]:
         """
         Find geographic midpoint to another spatial object.
 
@@ -247,8 +255,11 @@ class Coordinate:
             >>> midpoint = coord1.midpoint_to(coord2)
             >>> print(f"Midpoint: ({midpoint.longitude}, {midpoint.latitude})")
         """
+        # pylint: disable=import-outside-toplevel
         from ..spatial.calculations import SpatialCalculations
-        return SpatialCalculations.midpoint(self, other)
+
+        result = SpatialCalculations.midpoint(self, other)
+        return cast(Optional["Coordinate"], result)
 
     def __hash__(self) -> int:
         """
@@ -380,7 +391,7 @@ class Point(KMLElement):
         )
         return base_dict
 
-    def get_coordinates(self) -> Optional['Coordinate']:
+    def get_coordinates(self) -> Optional["Coordinate"]:
         """
         Return the coordinate representation of this point.
 
@@ -394,8 +405,8 @@ class Point(KMLElement):
 
     def distance_to(
         self,
-        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list],
-        unit: Optional['DistanceUnit'] = None
+        other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list],
+        unit: Optional["DistanceUnit"] = None,
     ) -> Optional[float]:
         """
         Calculate distance to another spatial object.
@@ -417,8 +428,7 @@ class Point(KMLElement):
         return self.coordinates.distance_to(other, unit)
 
     def bearing_to(
-        self,
-        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
+        self, other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list]
     ) -> Optional[float]:
         """
         Calculate bearing to another spatial object.
@@ -439,9 +449,8 @@ class Point(KMLElement):
         return self.coordinates.bearing_to(other)
 
     def midpoint_to(
-        self,
-        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
-    ) -> Optional['Coordinate']:
+        self, other: Union["Coordinate", "Point", "Placemark", Tuple[float, float], list]
+    ) -> Optional["Coordinate"]:
         """
         Find geographic midpoint to another spatial object.
 

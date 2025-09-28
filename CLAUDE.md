@@ -164,7 +164,7 @@ def test_quickstart_example(self) -> None:
     kml = KMLFile.from_string(SAMPLE_KML)
     all_places = kml.placemarks.all()
     # Verify results match documentation claims
-    self.assertGreater(len(all_places), 0)
+    assert len(all_places) > 0
 ```
 
 ### Testing Best Practices
@@ -284,3 +284,4 @@ When suggesting or reviewing code, ensure it meets these criteria:
 - No manual version updates needed in code
 - Use semantic versioning for git tags (v1.0.0, v1.1.0, etc.)
 - do not write disposable or "one-off" tests.  any information that is required during development that a "one-off" would provide will be useful in the future when debugging.  any code that exposes information or workflow for development purposes needs to go in an appropriately named file in the tests/ folder for future reference.
+- we do not use ignore or disable to 'fix' typing and linting errors

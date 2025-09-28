@@ -1,5 +1,5 @@
 Spatial Calculations
-===================
+====================
 
 .. module:: kmlorm.spatial
 
@@ -36,11 +36,11 @@ Quick Example
 
     # Calculate distance (default: kilometers)
     distance_km = nyc.distance_to(london)
-    print(f"Distance: {distance_km:.1f} km")  # Distance: 5567.5 km
+    print(f"Distance: {distance_km:.1f} km")  # Distance: 5570.2 km
 
     # Calculate in different units
     distance_miles = nyc.distance_to(london, unit=DistanceUnit.MILES)
-    print(f"Distance: {distance_miles:.1f} miles")  # Distance: 3459.3 miles
+    print(f"Distance: {distance_miles:.1f} miles")  # Distance: 3461.0 miles
 
     # Calculate bearing
     bearing = nyc.bearing_to(london)
@@ -49,9 +49,10 @@ Quick Example
     # Find midpoint
     midpoint = nyc.midpoint_to(london)
     print(f"Midpoint: ({midpoint.longitude:.2f}, {midpoint.latitude:.2f})")
+    # Midpoint: (-41.29, 52.37)
 
 Core Components
---------------
+---------------
 
 HasCoordinates Protocol
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,7 +121,7 @@ Distance Units
         distance_mi = point1.distance_to(point2, unit=DistanceUnit.MILES)
 
 Spatial Calculations
--------------------
+--------------------
 
 .. class:: SpatialCalculations
 
@@ -238,7 +239,7 @@ different trade-offs between accuracy and performance.
     is requested.
 
 Usage Examples
--------------
+--------------
 
 Basic Distance Calculations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -287,7 +288,7 @@ Working with Different Units
     print(f"Distance: {km:.1f} km = {miles:.1f} mi = {nautical:.1f} nm")
 
 Bearing and Navigation
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -360,7 +361,7 @@ Bulk Distance Operations
             print(f"{target.name}: {distance:.1f} km")
 
 Integration with QuerySets
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The QuerySet's ``near()`` method uses the spatial calculations internally:
 
@@ -387,7 +388,7 @@ The QuerySet's ``near()`` method uses the spatial calculations internally:
         print(f"{store.name}: {distance:.1f} km at {bearing:.0f}°")
 
 Edge Cases and Limitations
--------------------------
+--------------------------
 
 Date Line Crossing
 ~~~~~~~~~~~~~~~~~~
@@ -417,7 +418,7 @@ All strategies handle polar calculations correctly:
     distance = north_pole.distance_to(south_pole)  # ~20,004 km
 
 Coordinate Validation
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 Invalid coordinates are handled gracefully:
 
@@ -432,7 +433,7 @@ Invalid coordinates are handled gracefully:
     distance = place_no_coords.distance_to(north_pole)  # None
 
 Performance Considerations
--------------------------
+--------------------------
 
 Caching
 ~~~~~~~
@@ -446,7 +447,7 @@ The spatial module uses LRU caching for repeated calculations:
         distance = place1.distance_to(place2)  # Cached after first calculation
 
 Strategy Selection
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 Choose the appropriate strategy based on your needs:
 
@@ -466,24 +467,26 @@ Choose the appropriate strategy based on your needs:
     # The strategy can be selected internally based on requirements
 
 Typical Use Cases
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 For typical KML files with hundreds of placemarks, the default Haversine strategy
 provides excellent performance and accuracy. The spatial calculations are optimized
 for this common use case.
 
 API Reference
-------------
+-------------
 
 .. automodule:: kmlorm.spatial
    :members:
    :undoc-members:
    :show-inheritance:
+   :no-index:
 
 .. automodule:: kmlorm.spatial.calculations
    :members:
    :undoc-members:
    :show-inheritance:
+   :no-index:
 
 .. automodule:: kmlorm.spatial.strategies
    :members:

@@ -5,6 +5,7 @@ This module contains tests that verify all code examples from the
 API reference documentation work correctly.
 """
 
+# pylint: disable=duplicate-code
 from typing import Any
 from unittest.mock import mock_open, patch
 
@@ -24,8 +25,10 @@ class TestAPIExamples:
 
     api_test_kml: str
 
-    def setup_method(self) -> None:
-        """Set up test data for each test."""
+    @pytest.fixture(autouse=True)
+    def setup_kml_data(self) -> None:
+        """Set up test data using fixture from conftest."""
+        # Use a custom KML for API tests that matches documentation examples
         self.api_test_kml = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>

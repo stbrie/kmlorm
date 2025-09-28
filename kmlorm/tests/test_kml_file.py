@@ -5,6 +5,7 @@ This module tests the KMLFile class and its ability to load
 KML data from various sources.
 """
 
+# pylint: disable=duplicate-code
 from typing import Any
 from unittest.mock import mock_open, patch
 
@@ -20,20 +21,9 @@ class TestKMLFile:
     test_kml: str
 
     @pytest.fixture(autouse=True)
-    def setup_method(self) -> None:
-        """Set up test data."""
-        self.test_kml = """<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Test Document</name>
-    <Placemark>
-      <name>Test Placemark</name>
-      <Point>
-        <coordinates>-76.5,39.3,0</coordinates>
-      </Point>
-    </Placemark>
-  </Document>
-</kml>"""
+    def setup_kml_data(self, simple_kml_content: str) -> None:
+        """Set up test data using fixture from conftest."""
+        self.test_kml = simple_kml_content
 
     def test_from_string_basic(self) -> None:
         """Test loading KML from string."""

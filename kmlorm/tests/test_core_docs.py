@@ -7,12 +7,12 @@ work as documented and expected.
 """
 
 # pylint: disable=duplicate-code
-import unittest
 import inspect
 from typing import Any
+import pytest
 
 
-class TestCoreDocsExamples(unittest.TestCase):
+class TestCoreDocsExamples:
     """Test cases that validate kmlorm.core package functionality."""
 
     def test_core_package_imports(self) -> None:
@@ -21,9 +21,9 @@ class TestCoreDocsExamples(unittest.TestCase):
         import kmlorm.core  # pylint: disable=import-outside-toplevel
 
         # Verify the package has the expected docstring
-        self.assertIsNotNone(kmlorm.core.__doc__)
+        assert kmlorm.core.__doc__ is not None
         if kmlorm.core.__doc__:
-            self.assertIn("Core functionality for KML ORM", kmlorm.core.__doc__)
+            assert "Core functionality for KML ORM" in kmlorm.core.__doc__
 
     def test_core_exceptions_import(self) -> None:
         """Test that all exception classes can be imported from kmlorm.core."""
@@ -39,21 +39,21 @@ class TestCoreDocsExamples(unittest.TestCase):
         )
 
         # Verify all exception classes are available
-        self.assertTrue(inspect.isclass(KMLOrmException))
-        self.assertTrue(inspect.isclass(KMLParseError))
-        self.assertTrue(inspect.isclass(KMLElementNotFound))
-        self.assertTrue(inspect.isclass(KMLMultipleElementsReturned))
-        self.assertTrue(inspect.isclass(KMLInvalidCoordinates))
-        self.assertTrue(inspect.isclass(KMLValidationError))
-        self.assertTrue(inspect.isclass(KMLQueryError))
+        assert inspect.isclass(KMLOrmException) is True
+        assert inspect.isclass(KMLParseError) is True
+        assert inspect.isclass(KMLElementNotFound) is True
+        assert inspect.isclass(KMLMultipleElementsReturned) is True
+        assert inspect.isclass(KMLInvalidCoordinates) is True
+        assert inspect.isclass(KMLValidationError) is True
+        assert inspect.isclass(KMLQueryError) is True
 
         # Verify inheritance hierarchy
-        self.assertTrue(issubclass(KMLParseError, KMLOrmException))
-        self.assertTrue(issubclass(KMLElementNotFound, KMLOrmException))
-        self.assertTrue(issubclass(KMLMultipleElementsReturned, KMLOrmException))
-        self.assertTrue(issubclass(KMLInvalidCoordinates, KMLOrmException))
-        self.assertTrue(issubclass(KMLValidationError, KMLOrmException))
-        self.assertTrue(issubclass(KMLQueryError, KMLOrmException))
+        assert issubclass(KMLParseError, KMLOrmException) is True
+        assert issubclass(KMLElementNotFound, KMLOrmException) is True
+        assert issubclass(KMLMultipleElementsReturned, KMLOrmException) is True
+        assert issubclass(KMLInvalidCoordinates, KMLOrmException) is True
+        assert issubclass(KMLValidationError, KMLOrmException) is True
+        assert issubclass(KMLQueryError, KMLOrmException) is True
 
     def test_core_managers_import(self) -> None:
         """Test that manager classes can be imported from kmlorm.core."""
@@ -61,11 +61,11 @@ class TestCoreDocsExamples(unittest.TestCase):
         from kmlorm.core import KMLManager, RelatedManager
 
         # Verify manager classes are available
-        self.assertTrue(inspect.isclass(KMLManager))
-        self.assertTrue(inspect.isclass(RelatedManager))
+        assert inspect.isclass(KMLManager) is True
+        assert inspect.isclass(RelatedManager) is True
 
         # Verify RelatedManager inherits from KMLManager
-        self.assertTrue(issubclass(RelatedManager, KMLManager))
+        assert issubclass(RelatedManager, KMLManager) is True
 
     def test_core_querysets_import(self) -> None:
         """Test that QuerySet class can be imported from kmlorm.core."""
@@ -73,10 +73,10 @@ class TestCoreDocsExamples(unittest.TestCase):
         from kmlorm.core import KMLQuerySet
 
         # Verify QuerySet class is available
-        self.assertTrue(inspect.isclass(KMLQuerySet))
+        assert inspect.isclass(KMLQuerySet) is True
 
         # Verify it's a generic class
-        self.assertTrue(hasattr(KMLQuerySet, "__orig_bases__"))
+        assert hasattr(KMLQuerySet, "__orig_bases__") is True
 
     def test_core_all_exports(self) -> None:
         """Test that __all__ contains all documented exports."""
@@ -97,15 +97,15 @@ class TestCoreDocsExamples(unittest.TestCase):
         ]
 
         # Verify __all__ exists and contains expected exports
-        self.assertTrue(hasattr(kmlorm.core, "__all__"))
-        self.assertIsInstance(kmlorm.core.__all__, list)
+        assert hasattr(kmlorm.core, "__all__") is True
+        assert isinstance(kmlorm.core.__all__, list)
 
         for export in expected_exports:
-            self.assertIn(export, kmlorm.core.__all__)
+            assert export in kmlorm.core.__all__
 
         # Verify all exports in __all__ are actually available
         for export in kmlorm.core.__all__:
-            self.assertTrue(hasattr(kmlorm.core, export))
+            assert hasattr(kmlorm.core, export) is True
 
     def test_core_exception_functionality(self) -> None:
         """Test that core exceptions work as expected."""
@@ -117,20 +117,20 @@ class TestCoreDocsExamples(unittest.TestCase):
         )
 
         # Test that exceptions can be raised and caught
-        with self.assertRaises(KMLElementNotFound):
+        with pytest.raises(KMLElementNotFound):
             raise KMLElementNotFound("Placemark")
 
-        with self.assertRaises(KMLMultipleElementsReturned):
+        with pytest.raises(KMLMultipleElementsReturned):
             raise KMLMultipleElementsReturned("Placemark", 2)
 
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             raise KMLValidationError("Validation failed")
 
         # Test exception messages
         try:
             raise KMLElementNotFound("TestElement")
         except KMLElementNotFound as e:
-            self.assertEqual(str(e), "TestElement does not exist.")
+            assert str(e) == "TestElement does not exist."
 
     def test_core_manager_instantiation(self) -> None:
         """Test that core manager classes can be instantiated."""
@@ -139,12 +139,12 @@ class TestCoreDocsExamples(unittest.TestCase):
 
         # Test KMLManager instantiation
         manager: Any = KMLManager()
-        self.assertIsInstance(manager, KMLManager)
+        assert isinstance(manager, KMLManager)
 
         # Test RelatedManager instantiation
         related_manager: Any = RelatedManager()
-        self.assertIsInstance(related_manager, RelatedManager)
-        self.assertIsInstance(related_manager, KMLManager)  # Should inherit
+        assert isinstance(related_manager, RelatedManager)
+        assert isinstance(related_manager, KMLManager)  # Should inherit
 
     def test_core_queryset_instantiation(self) -> None:
         """Test that core QuerySet class can be instantiated."""
@@ -153,14 +153,14 @@ class TestCoreDocsExamples(unittest.TestCase):
 
         # Test QuerySet instantiation with empty list
         queryset: Any = KMLQuerySet([])
-        self.assertIsInstance(queryset, KMLQuerySet)
-        self.assertEqual(len(queryset), 0)
+        assert isinstance(queryset, KMLQuerySet)
+        assert len(queryset) == 0
 
         # Test QuerySet with some mock elements (using Any to avoid type errors)
         mock_elements: Any = ["element1", "element2", "element3"]
         queryset = KMLQuerySet(mock_elements)
-        self.assertEqual(len(queryset), 3)
-        self.assertIn("element1", queryset)
+        assert len(queryset) == 3
+        assert "element1" in queryset
 
     def test_core_package_structure(self) -> None:
         """Test that the core package structure matches documentation."""
@@ -171,14 +171,14 @@ class TestCoreDocsExamples(unittest.TestCase):
         import kmlorm.core.querysets
 
         # Verify submodules are accessible
-        self.assertTrue(hasattr(kmlorm.core, "exceptions"))
-        self.assertTrue(hasattr(kmlorm.core, "managers"))
-        self.assertTrue(hasattr(kmlorm.core, "querysets"))
+        assert hasattr(kmlorm.core, "exceptions") is True
+        assert hasattr(kmlorm.core, "managers") is True
+        assert hasattr(kmlorm.core, "querysets") is True
 
         # Verify submodules have expected content
-        self.assertTrue(hasattr(kmlorm.core.exceptions, "KMLOrmException"))
-        self.assertTrue(hasattr(kmlorm.core.managers, "KMLManager"))
-        self.assertTrue(hasattr(kmlorm.core.querysets, "KMLQuerySet"))
+        assert hasattr(kmlorm.core.exceptions, "KMLOrmException") is True
+        assert hasattr(kmlorm.core.managers, "KMLManager") is True
+        assert hasattr(kmlorm.core.querysets, "KMLQuerySet") is True
 
     def test_core_star_import(self) -> None:
         """Test that star import from kmlorm.core works correctly."""
@@ -191,12 +191,12 @@ class TestCoreDocsExamples(unittest.TestCase):
 
         # Verify __all__ covers the main exports
         for name in kmlorm.core.__all__:
-            self.assertIn(name, public_names)
+            assert name in public_names
 
         # Verify each item in __all__ is actually accessible
         for name in kmlorm.core.__all__:
             attr = getattr(kmlorm.core, name)
-            self.assertIsNotNone(attr)
+            assert attr is not None
 
     def test_core_docstring_content(self) -> None:
         """Test that core package docstring contains expected information."""
@@ -204,14 +204,14 @@ class TestCoreDocsExamples(unittest.TestCase):
         import kmlorm.core
 
         docstring = kmlorm.core.__doc__
-        self.assertIsNotNone(docstring)
+        assert docstring is not None
 
         # Verify key concepts are mentioned
         if docstring:
-            self.assertIn("Core functionality", docstring)
-            self.assertIn("KML ORM", docstring)
-            self.assertIn("Django-style", docstring)
-            self.assertIn("ORM interface", docstring)
+            assert "Core functionality" in docstring
+            assert "KML ORM" in docstring
+            assert "Django-style" in docstring
+            assert "ORM interface" in docstring
 
     def test_core_type_checking_support(self) -> None:
         """Test that core classes support type checking as expected."""
@@ -224,13 +224,13 @@ class TestCoreDocsExamples(unittest.TestCase):
         try:
             hints = get_type_hints(KMLManager.__init__)
             # Should have at least return type annotation
-            self.assertIsInstance(hints, dict)
+            assert isinstance(hints, dict)
         except (NameError, AttributeError):
             # Type hints may not be available in all contexts
             pass
 
         # KMLQuerySet should be generic
-        self.assertTrue(hasattr(KMLQuerySet, "__class_getitem__"))
+        assert hasattr(KMLQuerySet, "__class_getitem__") is True
 
     def test_core_integration_with_main_package(self) -> None:
         """Test that core classes integrate properly with main kmlorm package."""
@@ -240,13 +240,13 @@ class TestCoreDocsExamples(unittest.TestCase):
         from kmlorm.core import KMLValidationError as CoreKMLValidationError
 
         # Should be the same class
-        self.assertIs(KMLValidationError, CoreKMLValidationError)
+        assert KMLValidationError is CoreKMLValidationError
 
         # Test that Coordinate class is available
         from kmlorm.models.point import Coordinate
 
         # Test that core exception is raised by coordinate validation
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             Coordinate(longitude=200, latitude=100)  # Invalid coordinates
 
     def test_core_module_metadata(self) -> None:
@@ -255,19 +255,15 @@ class TestCoreDocsExamples(unittest.TestCase):
         import kmlorm.core
 
         # Should have a docstring
-        self.assertIsNotNone(kmlorm.core.__doc__)
-        self.assertIsInstance(kmlorm.core.__doc__, str)
+        assert kmlorm.core.__doc__ is not None
+        assert isinstance(kmlorm.core.__doc__, str)
         if kmlorm.core.__doc__:
-            self.assertGreater(len(kmlorm.core.__doc__.strip()), 0)
+            assert len(kmlorm.core.__doc__.strip()) > 0
 
         # Should have __all__ defined
-        self.assertTrue(hasattr(kmlorm.core, "__all__"))
-        self.assertIsInstance(kmlorm.core.__all__, list)
-        self.assertGreater(len(kmlorm.core.__all__), 0)
+        assert hasattr(kmlorm.core, "__all__")
+        assert isinstance(kmlorm.core.__all__, list)
+        assert len(kmlorm.core.__all__) > 0
 
         # Should have a package path
-        self.assertTrue(hasattr(kmlorm.core, "__path__"))
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert hasattr(kmlorm.core, "__path__")

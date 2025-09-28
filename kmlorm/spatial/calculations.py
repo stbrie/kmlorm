@@ -24,12 +24,13 @@ Examples:
     >>> print(f"Bearing: {bearing:.1f} degrees")
 """
 
+# pylint: disable=too-few-public-methods, too-many-locals
 import logging
 import math
 import time
 from enum import Enum
 from functools import lru_cache, wraps
-from typing import Optional, Protocol, Tuple, Union, List, TYPE_CHECKING
+from typing import Optional, Protocol, Tuple, Union, List, TYPE_CHECKING, Any
 
 from .constants import (
     EARTH_RADIUS_MEAN_KM,
@@ -53,6 +54,7 @@ class DistanceUnit(Enum):
     The values represent the number of units per kilometer.
     For example, METERS = 1000 means 1 km = 1000 meters.
     """
+
     METERS = 1000.0
     KILOMETERS = 1.0
     MILES = 0.621371
@@ -69,7 +71,7 @@ class HasCoordinates(Protocol):
     a Coordinate representation of itself.
     """
 
-    def get_coordinates(self) -> Optional['Coordinate']:
+    def get_coordinates(self) -> Optional["Coordinate"]:
         """
         Return the coordinate representation of this object.
 
@@ -78,23 +80,22 @@ class HasCoordinates(Protocol):
         """
 
 
-def log_spatial_operation(func):
+def log_spatial_operation(func: Any) -> Any:
     """
     Decorator to log spatial operations for monitoring and debugging.
 
     Logs slow operations (>0.1s) and operations that return None.
     """
+
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         start_time = time.perf_counter()
         try:
             result = func(*args, **kwargs)
             elapsed = time.perf_counter() - start_time
 
             if elapsed > 0.1:  # Log slow operations
-                logger.warning(
-                    "Slow spatial operation: %s took %.3fs", func.__name__, elapsed
-                )
+                logger.warning("Slow spatial operation: %s took %.3fs", func.__name__, elapsed)
 
             if result is None:
                 logger.debug("Spatial operation returned None: %s", func.__name__)
@@ -126,9 +127,8 @@ class SpatialCalculations:
 
     @classmethod
     def _extract_coordinates(
-        cls,
-        obj: Union[HasCoordinates, Tuple[float, float], List[float]]
-    ) -> Optional['Coordinate']:
+        cls, obj: Union[HasCoordinates, Tuple[float, float], List[float]]
+    ) -> Optional["Coordinate"]:
         """
         Extract coordinates from various spatial input types.
 
@@ -142,12 +142,15 @@ class SpatialCalculations:
             InvalidCoordinateError: If coordinate format is invalid
         """
         # Import here to avoid circular imports
+        # pylint: disable=import-outside-toplevel
         from ..models.point import Coordinate
 
-        if hasattr(obj, 'get_coordinates'):
-            # Object implements HasCoordinates protocol
-            return obj.get_coordinates()
-        elif isinstance(obj, (tuple, list)) and len(obj) >= 2:
+        # Check if object implements HasCoordinates protocol (has get_coordinates method)
+        if hasattr(obj, "get_coordinates") and not isinstance(obj, (tuple, list)):
+            # This must be a HasCoordinates object
+            protocol_obj = obj  # type: HasCoordinates
+            return protocol_obj.get_coordinates()
+        if isinstance(obj, (tuple, list)) and len(obj) >= 2:
             # Tuple/list format: (longitude, latitude[, altitude])
             try:
                 longitude = float(obj[0])
@@ -158,8 +161,7 @@ class SpatialCalculations:
                 raise InvalidCoordinateError(
                     f"Invalid coordinate tuple/list: {obj}. Expected (lon, lat[, alt])"
                 ) from e
-        else:
-            return None
+        return None
 
     @classmethod
     @lru_cache(maxsize=LRU_CACHE_SIZE)
@@ -188,15 +190,13 @@ class SpatialCalculations:
         """
         # Convert to radians
         lat1_r, lon1_r, lat2_r, lon2_r = map(
-            lambda x: x * DEGREES_TO_RADIANS,
-            [lat1, lon1, lat2, lon2]
+            lambda x: x * DEGREES_TO_RADIANS, [lat1, lon1, lat2, lon2]
         )
 
         # Haversine formula
         dlat = lat2_r - lat1_r
         dlon = lon2_r - lon1_r
-        a = (math.sin(dlat / 2) ** 2 +
-             math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2)
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
         c = 2 * math.asin(math.sqrt(a))
 
         return EARTH_RADIUS_MEAN_KM * c
@@ -223,15 +223,15 @@ class SpatialCalculations:
         """
         # Convert to radians
         lat1_r, lon1_r, lat2_r, lon2_r = map(
-            lambda x: x * DEGREES_TO_RADIANS,
-            [lat1, lon1, lat2, lon2]
+            lambda x: x * DEGREES_TO_RADIANS, [lat1, lon1, lat2, lon2]
         )
 
         # Calculate bearing
         dlon = lon2_r - lon1_r
         y = math.sin(dlon) * math.cos(lat2_r)
-        x = (math.cos(lat1_r) * math.sin(lat2_r) -
-             math.sin(lat1_r) * math.cos(lat2_r) * math.cos(dlon))
+        x = math.cos(lat1_r) * math.sin(lat2_r) - math.sin(lat1_r) * math.cos(lat2_r) * math.cos(
+            dlon
+        )
 
         bearing = math.atan2(y, x)
 
@@ -242,7 +242,9 @@ class SpatialCalculations:
         return bearing
 
     @classmethod
-    def _calculate_midpoint(cls, lat1: float, lon1: float, lat2: float, lon2: float) -> Tuple[float, float]:
+    def _calculate_midpoint(
+        cls, lat1: float, lon1: float, lat2: float, lon2: float
+    ) -> Tuple[float, float]:
         """
         Calculate the geographic midpoint between two coordinates.
 
@@ -257,8 +259,7 @@ class SpatialCalculations:
         """
         # Convert to radians
         lat1_r, lon1_r, lat2_r, lon2_r = map(
-            lambda x: x * DEGREES_TO_RADIANS,
-            [lat1, lon1, lat2, lon2]
+            lambda x: x * DEGREES_TO_RADIANS, [lat1, lon1, lat2, lon2]
         )
 
         # Calculate midpoint using spherical geometry
@@ -268,8 +269,7 @@ class SpatialCalculations:
         by = math.cos(lat2_r) * math.sin(dlon)
 
         lat_mid = math.atan2(
-            math.sin(lat1_r) + math.sin(lat2_r),
-            math.sqrt((math.cos(lat1_r) + bx) ** 2 + by ** 2)
+            math.sin(lat1_r) + math.sin(lat2_r), math.sqrt((math.cos(lat1_r) + bx) ** 2 + by**2)
         )
 
         lon_mid = lon1_r + math.atan2(by, math.cos(lat1_r) + bx)
@@ -289,7 +289,7 @@ class SpatialCalculations:
         cls,
         from_obj: Union[HasCoordinates, Tuple[float, float], List[float]],
         to_obj: Union[HasCoordinates, Tuple[float, float], List[float]],
-        unit: DistanceUnit = DistanceUnit.KILOMETERS
+        unit: DistanceUnit = DistanceUnit.KILOMETERS,
     ) -> Optional[float]:
         """
         Calculate distance between two objects with coordinates.
@@ -331,15 +331,14 @@ class SpatialCalculations:
 
             # Calculate distance using Haversine formula
             km = cls._haversine_distance(
-                from_coords.latitude, from_coords.longitude,
-                to_coords.latitude, to_coords.longitude
+                from_coords.latitude, from_coords.longitude, to_coords.latitude, to_coords.longitude
             )
 
             # Convert to requested units
             return km * unit.value
 
         except Exception as e:
-            logger.error(f"Distance calculation failed: {e}")
+            logger.error("Distance calculation failed: %s", e)
             raise SpatialCalculationError(f"Failed to calculate distance: {e}") from e
 
     @classmethod
@@ -347,7 +346,7 @@ class SpatialCalculations:
     def bearing_between(
         cls,
         from_obj: Union[HasCoordinates, Tuple[float, float], List[float]],
-        to_obj: Union[HasCoordinates, Tuple[float, float], List[float]]
+        to_obj: Union[HasCoordinates, Tuple[float, float], List[float]],
     ) -> Optional[float]:
         """
         Calculate the initial bearing from one object to another.
@@ -378,12 +377,11 @@ class SpatialCalculations:
                 return None
 
             return cls._calculate_bearing(
-                from_coords.latitude, from_coords.longitude,
-                to_coords.latitude, to_coords.longitude
+                from_coords.latitude, from_coords.longitude, to_coords.latitude, to_coords.longitude
             )
 
         except Exception as e:
-            logger.error(f"Bearing calculation failed: {e}")
+            logger.error("Bearing calculation failed: %s", e)
             raise SpatialCalculationError(f"Failed to calculate bearing: {e}") from e
 
     @classmethod
@@ -391,8 +389,8 @@ class SpatialCalculations:
     def midpoint(
         cls,
         obj1: Union[HasCoordinates, Tuple[float, float], List[float]],
-        obj2: Union[HasCoordinates, Tuple[float, float], List[float]]
-    ) -> Optional['Coordinate']:
+        obj2: Union[HasCoordinates, Tuple[float, float], List[float]],
+    ) -> Optional["Coordinate"]:
         """
         Find the geographic midpoint between two objects.
 
@@ -410,6 +408,7 @@ class SpatialCalculations:
             >>> print(f"Midpoint: {midpoint.longitude}, {midpoint.latitude}")
         """
         try:
+            # pylint: disable=import-outside-toplevel
             from ..models.point import Coordinate
 
             coords1 = cls._extract_coordinates(obj1)
@@ -420,14 +419,13 @@ class SpatialCalculations:
                 return None
 
             lon_mid, lat_mid = cls._calculate_midpoint(
-                coords1.latitude, coords1.longitude,
-                coords2.latitude, coords2.longitude
+                coords1.latitude, coords1.longitude, coords2.latitude, coords2.longitude
             )
 
             return Coordinate(longitude=lon_mid, latitude=lat_mid)
 
         except Exception as e:
-            logger.error(f"Midpoint calculation failed: {e}")
+            logger.error("Midpoint calculation failed: %s", e)
             raise SpatialCalculationError(f"Failed to calculate midpoint: {e}") from e
 
     @classmethod
@@ -436,7 +434,7 @@ class SpatialCalculations:
         cls,
         from_obj: Union[HasCoordinates, Tuple[float, float], List[float]],
         to_objects: List[Union[HasCoordinates, Tuple[float, float], List[float]]],
-        unit: DistanceUnit = DistanceUnit.KILOMETERS
+        unit: DistanceUnit = DistanceUnit.KILOMETERS,
     ) -> List[Optional[float]]:
         """
         Calculate distances from one object to many others efficiently.
@@ -469,29 +467,30 @@ class SpatialCalculations:
             if not from_coords:
                 return [None] * len(to_objects)
 
-            results = []
+            results: List[Optional[float]] = []
             for to_obj in to_objects:
                 to_coords = cls._extract_coordinates(to_obj)
                 if not to_coords:
                     results.append(None)
                 else:
                     km = cls._haversine_distance(
-                        from_coords.latitude, from_coords.longitude,
-                        to_coords.latitude, to_coords.longitude
+                        from_coords.latitude,
+                        from_coords.longitude,
+                        to_coords.latitude,
+                        to_coords.longitude,
                     )
                     results.append(km * unit.value)
 
             return results
 
         except Exception as e:
-            logger.error(f"Bulk distance calculation failed: {e}")
+            logger.error("Bulk distance calculation failed: %s", e)
             raise SpatialCalculationError(f"Failed to calculate bulk distances: {e}") from e
 
     @classmethod
     @log_spatial_operation
     def bounding_box(
-        cls,
-        objects: List[Union[HasCoordinates, Tuple[float, float], List[float]]]
+        cls, objects: List[Union[HasCoordinates, Tuple[float, float], List[float]]]
     ) -> Optional[Tuple[float, float, float, float]]:
         """
         Calculate minimum bounding rectangle for a set of objects.
@@ -536,8 +535,8 @@ class SpatialCalculations:
         cls,
         start: Union[HasCoordinates, Tuple[float, float], List[float]],
         end: Union[HasCoordinates, Tuple[float, float], List[float]],
-        fraction: float
-    ) -> Optional['Coordinate']:
+        fraction: float,
+    ) -> Optional["Coordinate"]:
         """
         Find a point along the great circle path between two coordinates.
 
@@ -562,6 +561,7 @@ class SpatialCalculations:
             raise ValueError(f"Fraction must be between 0 and 1, got {fraction}")
 
         try:
+            # pylint: disable=import-outside-toplevel
             from ..models.point import Coordinate
 
             start_coords = cls._extract_coordinates(start)
@@ -574,10 +574,17 @@ class SpatialCalculations:
             # Special cases
             if fraction == 0.0:
                 return start_coords
-            elif fraction == 1.0:
+            if fraction == 1.0:
                 return end_coords
-            elif fraction == 0.5:
-                return cls.midpoint(start, end)
+            if fraction == 0.5:
+                # Calculate midpoint directly
+                lon_mid, lat_mid = cls._calculate_midpoint(
+                    start_coords.latitude,
+                    start_coords.longitude,
+                    end_coords.latitude,
+                    end_coords.longitude,
+                )
+                return Coordinate(longitude=lon_mid, latitude=lat_mid)
 
             # Convert to radians
             lat1_r = start_coords.latitude * DEGREES_TO_RADIANS
@@ -586,10 +593,12 @@ class SpatialCalculations:
             lon2_r = end_coords.longitude * DEGREES_TO_RADIANS
 
             # Calculate intermediate point using spherical interpolation
-            d = 2 * math.asin(math.sqrt(
-                math.sin((lat1_r - lat2_r) / 2) ** 2 +
-                math.cos(lat1_r) * math.cos(lat2_r) * math.sin((lon1_r - lon2_r) / 2) ** 2
-            ))
+            d = 2 * math.asin(
+                math.sqrt(
+                    math.sin((lat1_r - lat2_r) / 2) ** 2
+                    + math.cos(lat1_r) * math.cos(lat2_r) * math.sin((lon1_r - lon2_r) / 2) ** 2
+                )
+            )
 
             if d == 0:  # Same point
                 return start_coords
@@ -601,7 +610,7 @@ class SpatialCalculations:
             y = a * math.cos(lat1_r) * math.sin(lon1_r) + b * math.cos(lat2_r) * math.sin(lon2_r)
             z = a * math.sin(lat1_r) + b * math.sin(lat2_r)
 
-            lat_interp = math.atan2(z, math.sqrt(x ** 2 + y ** 2))
+            lat_interp = math.atan2(z, math.sqrt(x**2 + y**2))
             lon_interp = math.atan2(y, x)
 
             # Convert back to degrees
@@ -611,5 +620,5 @@ class SpatialCalculations:
             return Coordinate(longitude=lon_interp, latitude=lat_interp)
 
         except Exception as e:
-            logger.error(f"Interpolation failed: {e}")
+            logger.error("Interpolation failed: %s", e)
             raise SpatialCalculationError(f"Failed to interpolate: {e}") from e

@@ -5,16 +5,24 @@ This test suite ensures that all code examples in the managers documentation
 are functional and produce the expected results.
 """
 
-import unittest
+import pytest
 from kmlorm import KMLFile, Placemark, Folder
 from kmlorm.models.point import Coordinate
 from kmlorm.core.exceptions import KMLElementNotFound, KMLMultipleElementsReturned
 
 
-class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestManagersDocsExamples:  # pylint: disable=too-many-public-methods
     """Test cases that validate kmlorm.core.managers.rst documentation examples."""
 
-    def setUp(self) -> None:
+    kml: KMLFile
+    placemark1: Placemark
+    placemark2: Placemark
+    placemark3: Placemark
+    folder1: Folder
+    folder2: Folder
+
+    @pytest.fixture(autouse=True)
+    def setup_method(self) -> None:
         """Set up test data for manager testing."""
         # Create a minimal KML structure for testing
         self.kml = KMLFile()
@@ -60,9 +68,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         paths_mgr = self.kml.paths
 
         # Verify managers are accessible and of correct types
-        self.assertIsNotNone(placemarks_mgr)
-        self.assertIsNotNone(folders_mgr)
-        self.assertIsNotNone(paths_mgr)
+        assert placemarks_mgr is not None
+        assert folders_mgr is not None
+        assert paths_mgr is not None
 
     def test_basic_manager_operations_root_level_elements_example(self) -> None:
         """Test the root-level elements example from Basic Manager Operations section."""
@@ -74,10 +82,10 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         root_folders = self.kml.folders.children()  # Direct children only
 
         # Verify we get the expected elements
-        self.assertEqual(len(root_placemarks), 3)
-        self.assertEqual(len(root_folders), 2)
-        self.assertIn(self.placemark1, root_placemarks)
-        self.assertIn(self.folder1, root_folders)
+        assert len(root_placemarks) == 3
+        assert len(root_folders) == 2
+        assert self.placemark1 in root_placemarks
+        assert self.folder1 in root_folders
 
     def test_basic_manager_operations_flattened_elements_example(self) -> None:
         """Test the flattened elements example from Basic Manager Operations section."""
@@ -89,11 +97,11 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         all_folders = self.kml.folders.all()
 
         # Verify flatten parameter works (should include nested elements when present)
-        self.assertIsNotNone(all_placemarks)
-        self.assertIsNotNone(all_folders)
+        assert all_placemarks is not None
+        assert all_folders is not None
         # For this simple test, root and flattened should be the same since no nesting
-        self.assertEqual(len(all_placemarks), 3)
-        self.assertEqual(len(all_folders), 2)
+        assert len(all_placemarks) == 3
+        assert len(all_folders) == 2
 
     def test_querying_with_managers_basic_filtering_example(self) -> None:
         """Test the basic filtering example from Querying with Managers section."""
@@ -105,14 +113,14 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         visible_elements = self.kml.placemarks.all().filter(visibility=True)
 
         # Verify filtering works correctly
-        self.assertEqual(len(capital_stores), 2)  # Capital Electric and Capital Hardware
-        self.assertIn(self.placemark1, capital_stores)
-        self.assertIn(self.placemark2, capital_stores)
+        assert len(capital_stores) == 2  # Capital Electric and Capital Hardware
+        assert self.placemark1 in capital_stores
+        assert self.placemark2 in capital_stores
 
-        self.assertEqual(len(visible_elements), 2)  # Two placemarks with visibility=True
-        self.assertIn(self.placemark1, visible_elements)
-        self.assertIn(self.placemark2, visible_elements)
-        self.assertNotIn(self.placemark3, visible_elements)
+        assert len(visible_elements) == 2  # Two placemarks with visibility=True
+        assert self.placemark1 in visible_elements
+        assert self.placemark2 in visible_elements
+        assert self.placemark3 not in visible_elements
 
     def test_querying_with_managers_get_single_element_success_example(self) -> None:
         """Test the successful get single element example from Querying with Managers section."""
@@ -130,24 +138,18 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
             found_message = f"Found: {specific_store.name}"
 
             # Verify we found the right element
-            self.assertEqual(specific_store, self.placemark1)
-            self.assertEqual(found_message, "Found: Capital Electric")
+            assert specific_store == self.placemark1
+            assert found_message == "Found: Capital Electric"
         except KMLElementNotFound:
-            self.fail("Store should have been found")
+            pytest.fail("Store should have been found")
         except KMLMultipleElementsReturned:
-            self.fail("Only one store should match")
+            pytest.fail("Only one store should match")
 
     def test_querying_with_managers_get_single_element_not_found_example(self) -> None:
         """Test the element not found example from Querying with Managers section."""
         # Test the KMLElementNotFound exception path
-        try:
-            _ = self.kml.placemarks.all().get(name="Nonexistent Store")
-            self.fail("Should have raised KMLElementNotFound")
-        except KMLElementNotFound:
-            error_message = "Store not found"
-            self.assertEqual(error_message, "Store not found")
-        except KMLMultipleElementsReturned:
-            self.fail("Should have raised KMLElementNotFound, not KMLMultipleElementsReturned")
+        with pytest.raises(KMLElementNotFound):
+            self.kml.placemarks.all().get(name="Nonexistent Store")
 
     def test_querying_with_managers_count_and_existence_example(self) -> None:
         """Test the count and existence example from Querying with Managers section."""
@@ -159,8 +161,8 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         has_folders = self.kml.folders.exists()
 
         # Verify count and existence checks
-        self.assertEqual(total_placemarks, 3)
-        self.assertTrue(has_folders)
+        assert total_placemarks == 3
+        assert has_folders is True
 
     def test_querying_with_managers_ordering_example(self) -> None:
         """Test the ordering example from Querying with Managers section."""
@@ -171,16 +173,16 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         sorted_placemarks = self.kml.placemarks.all().order_by("name")
 
         # Verify ordering by name works
-        self.assertEqual(len(sorted_placemarks), 3)
+        assert len(sorted_placemarks) == 3
         # Names should be in alphabetical order
         names = [p.name for p in sorted_placemarks if p.name is not None]
 
-        self.assertEqual(names, sorted(names))
+        assert names == sorted(names)
 
         # Test reverse ordering (using name since created_date might not be set)
         reverse_sorted = self.kml.placemarks.all().order_by("-name")
         reverse_names = [p.name for p in reverse_sorted if p.name is not None]
-        self.assertEqual(reverse_names, sorted(names, reverse=True))
+        assert reverse_names == sorted(names, reverse=True)
 
     def test_geospatial_queries_near_example(self) -> None:
         """Test the near query example from Geospatial Queries section."""
@@ -190,9 +192,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         nearby = self.kml.placemarks.all().near(-76.6, 39.3, radius_km=25)
 
         # Verify geospatial query works (all our test placemarks should be within 25km)
-        self.assertIsNotNone(nearby)
+        assert nearby is not None
         # All placemarks should be nearby given our test coordinates
-        self.assertGreaterEqual(len(nearby), 1)
+        assert len(nearby) >= 1
 
     def test_geospatial_queries_within_bounds_example(self) -> None:
         """Test the within bounds example from Geospatial Queries section."""
@@ -206,9 +208,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         )
 
         # Verify bounding box query works
-        self.assertIsNotNone(bounded)
+        assert bounded is not None
         # All our test placemarks should be within these bounds
-        self.assertGreaterEqual(len(bounded), 1)
+        assert len(bounded) >= 1
 
     def test_geospatial_queries_coordinate_validity_example(self) -> None:
         """Test the coordinate validity example from Geospatial Queries section."""
@@ -220,8 +222,8 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         has_coords = self.kml.placemarks.all().has_coordinates()
 
         # Verify coordinate validation queries
-        self.assertEqual(len(valid_coords), 3)  # All our placemarks have valid coordinates
-        self.assertEqual(len(has_coords), 3)  # All our placemarks have coordinates
+        assert len(valid_coords) == 3  # All our placemarks have valid coordinates
+        assert len(has_coords) == 3  # All our placemarks have coordinates
 
     def test_creating_and_managing_elements_create_through_manager_example(self) -> None:
         """Test the create through manager example from Creating and Managing Elements section."""
@@ -241,10 +243,10 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         )
 
         # Verify the placemark was created and added
-        self.assertEqual(new_placemark.name, "New Store Location")
-        self.assertEqual(new_placemark.description, "A newly added store")
-        self.assertEqual(self.kml.placemarks.count(), initial_count + 1)
-        self.assertIn(new_placemark, self.kml.placemarks.children())
+        assert new_placemark.name == "New Store Location"
+        assert new_placemark.description == "A newly added store"
+        assert self.kml.placemarks.count() == initial_count + 1
+        assert new_placemark in self.kml.placemarks.children()
 
     def test_creating_and_managing_elements_add_existing_example(self) -> None:
         """Test the add existing elements example from Creating and Managing Elements section."""
@@ -258,8 +260,8 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         self.kml.placemarks.add(another_placemark)
 
         # Verify the placemark was added
-        self.assertEqual(self.kml.placemarks.count(), initial_count + 1)
-        self.assertIn(another_placemark, self.kml.placemarks.children())
+        assert self.kml.placemarks.count() == initial_count + 1
+        assert another_placemark in self.kml.placemarks.children()
 
     def test_creating_and_managing_elements_bulk_creation_example(self) -> None:
         """Test the bulk creation example from Creating and Managing Elements section."""
@@ -275,9 +277,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         self.kml.placemarks.bulk_create(bulk_placemarks)
 
         # Verify bulk creation worked
-        self.assertEqual(self.kml.placemarks.count(), initial_count + 10)
+        assert self.kml.placemarks.count() == initial_count + 10
         for placemark in bulk_placemarks:
-            self.assertIn(placemark, self.kml.placemarks.children())
+            assert placemark in self.kml.placemarks.children()
 
     def test_creating_and_managing_elements_get_or_create_example(self) -> None:
         """Test the get or create example from Creating and Managing Elements section."""
@@ -298,10 +300,10 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         )
 
         # Verify get_or_create behavior
-        self.assertTrue(created1)  # First call creates
-        self.assertFalse(created2)  # Second call gets existing
-        self.assertEqual(store1, store2)  # Same object
-        self.assertEqual(store1.name, "Unique Store")
+        assert created1 is True  # First call creates
+        assert created2 is False
+        assert store1 == store2  # Same object
+        assert store1.name == "Unique Store"
         # Note: defaults may not be applied as expected in the current implementation
 
     def test_working_with_relationships_access_folder_contents_example(self) -> None:
@@ -335,9 +337,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
                 folder_output.append(subfolder_line)
 
         # Verify the structure is accessible
-        self.assertIn("Folder: Stores", folder_output)
-        self.assertIn("Folder: Warehouses", folder_output)
-        self.assertIn("  Placemark: Capital Electric", folder_output)
+        assert "Folder: Stores" in folder_output
+        assert "Folder: Warehouses" in folder_output
+        assert "  Placemark: Capital Electric" in folder_output
 
     def test_working_with_relationships_create_in_folder_example(self) -> None:
         """Test the create in folder example from Working with Relationships section."""
@@ -350,7 +352,7 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         #     )
 
         main_folder = self.kml.folders.first()
-        self.assertIsNotNone(main_folder)  # We should have folders
+        assert main_folder is not None  # We should have folders
 
         if main_folder:
             initial_count = main_folder.placemarks.count()
@@ -360,10 +362,10 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
             )
 
             # Verify the placemark was created in the folder
-            self.assertEqual(new_placemark.name, "Store in Folder")
-            self.assertEqual(new_placemark.description, "Added to specific folder")
-            self.assertEqual(main_folder.placemarks.count(), initial_count + 1)
-            self.assertIn(new_placemark, main_folder.placemarks.children())
+            assert new_placemark.name == "Store in Folder"
+            assert new_placemark.description == "Added to specific folder"
+            assert main_folder.placemarks.count() == initial_count + 1
+            assert new_placemark in main_folder.placemarks.children()
 
     def test_best_practices_flatten_for_comprehensive_queries_example(self) -> None:
         """Test the flatten best practice example from Best Practices section."""
@@ -380,8 +382,8 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         root_stores = self.kml.placemarks.filter(name__icontains="store")
 
         # Verify both approaches work but flatten is more comprehensive
-        self.assertIsNotNone(all_stores)
-        self.assertIsNotNone(root_stores)
+        assert all_stores is not None
+        assert root_stores is not None
         # In our simple test case, they should be the same since no nesting
         # But the pattern demonstrates the best practice
 
@@ -413,8 +415,8 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         assert unique_store is not None  # For mypy
 
         # Verify the exception handling creates the element when not found
-        self.assertEqual(unique_store.name, "Unique Store")
-        self.assertIn(unique_store, self.kml.placemarks.children())
+        assert unique_store.name == "Unique Store"
+        assert unique_store in self.kml.placemarks.children()
 
     def test_best_practices_use_appropriate_managers_example(self) -> None:
         """Test the appropriate managers best practice from Best Practices section."""
@@ -437,9 +439,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
             new_placemark = folder.placemarks.create(name="In Folder")
 
             # Verify proper manager usage
-            self.assertIsNotNone(folder_placemarks)
-            self.assertEqual(new_placemark.name, "In Folder")
-            self.assertIn(new_placemark, folder.placemarks.children())
+            assert folder_placemarks is not None
+            assert new_placemark.name == "In Folder"
+            assert new_placemark in folder.placemarks.children()
 
     def test_best_practices_leverage_geospatial_queries_example(self) -> None:
         """Test the geospatial queries best practice from Best Practices section."""
@@ -461,13 +463,9 @@ class TestManagersDocsExamples(unittest.TestCase):  # pylint: disable=too-many-p
         )
 
         # Verify chained geospatial and attribute filtering works
-        self.assertIsNotNone(nearby_visible_stores)
+        assert nearby_visible_stores is not None
         # Should find stores that are near, visible, and contain 'store' in name
         for store in nearby_visible_stores:
-            self.assertTrue(store.visibility)
+            assert store.visibility is True
             if store.name:
-                self.assertIn("store", store.name.lower())
-
-
-if __name__ == "__main__":
-    unittest.main()
+                assert "store" in store.name.lower()

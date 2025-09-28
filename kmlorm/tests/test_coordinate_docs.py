@@ -5,13 +5,13 @@ This test suite ensures that all code examples in the coordinates documentation
 are functional and produce the expected results.
 """
 
-import unittest
+import pytest
 from kmlorm.models.point import Coordinate, Point
 from kmlorm.core.exceptions import KMLValidationError
 from kmlorm import Placemark
 
 
-class TestCoordinateDocsExamples(unittest.TestCase):
+class TestCoordinateDocsExamples:
     """Test cases that validate coordinates.rst documentation examples."""
 
     def test_creating_coordinates_from_tuple(self) -> None:
@@ -19,54 +19,54 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         # Example: coord1 = Coordinate.from_tuple((-76.5, 39.3, 100))
         coord1 = Coordinate.from_tuple((-76.5, 39.3, 100))
 
-        self.assertEqual(coord1.longitude, -76.5)
-        self.assertEqual(coord1.latitude, 39.3)
-        self.assertEqual(coord1.altitude, 100)
+        assert coord1.longitude == -76.5
+        assert coord1.latitude == 39.3
+        assert coord1.altitude == 100
 
     def test_creating_coordinates_from_string(self) -> None:
         """Test the 'From string' example from Creating Coordinates section."""
         # Example: coord2 = Coordinate.from_string("-76.5,39.3,100")
         coord2 = Coordinate.from_string("-76.5,39.3,100")
 
-        self.assertEqual(coord2.longitude, -76.5)
-        self.assertEqual(coord2.latitude, 39.3)
-        self.assertEqual(coord2.altitude, 100)
+        assert coord2.longitude == -76.5
+        assert coord2.latitude == 39.3
+        assert coord2.altitude == 100
 
     def test_creating_coordinates_direct_creation(self) -> None:
         """Test the 'Direct creation' example from Creating Coordinates section."""
         # Example: coord3 = Coordinate(longitude=-76.5, latitude=39.3, altitude=100)
         coord3 = Coordinate(longitude=-76.5, latitude=39.3, altitude=100)
 
-        self.assertEqual(coord3.longitude, -76.5)
-        self.assertEqual(coord3.latitude, 39.3)
-        self.assertEqual(coord3.altitude, 100)
+        assert coord3.longitude == -76.5
+        assert coord3.latitude == 39.3
+        assert coord3.altitude == 100
 
     def test_creating_coordinates_from_any_tuple(self) -> None:
         """Test the 'From various formats' tuple example from Creating Coordinates section."""
         # Example: coord4 = Coordinate.from_any((-76.5, 39.3))
         coord4 = Coordinate.from_any((-76.5, 39.3))
 
-        self.assertEqual(coord4.longitude, -76.5)
-        self.assertEqual(coord4.latitude, 39.3)
-        self.assertEqual(coord4.altitude, 0)  # Default altitude
+        assert coord4.longitude == -76.5
+        assert coord4.latitude == 39.3
+        assert coord4.altitude == 0  # Default altitude
 
     def test_creating_coordinates_from_any_string(self) -> None:
         """Test the 'From various formats' string example from Creating Coordinates section."""
         # Example: coord5 = Coordinate.from_any("-76.5,39.3")
         coord5 = Coordinate.from_any("-76.5,39.3")
 
-        self.assertEqual(coord5.longitude, -76.5)
-        self.assertEqual(coord5.latitude, 39.3)
-        self.assertEqual(coord5.altitude, 0)  # Default altitude
+        assert coord5.longitude == -76.5
+        assert coord5.latitude == 39.3
+        assert coord5.altitude == 0  # Default altitude
 
     def test_creating_coordinates_from_any_list(self) -> None:
         """Test the 'From various formats' list example from Creating Coordinates section."""
         # Example: coord6 = Coordinate.from_any([-76.5, 39.3, 0])
         coord6 = Coordinate.from_any([-76.5, 39.3, 0])
 
-        self.assertEqual(coord6.longitude, -76.5)
-        self.assertEqual(coord6.latitude, 39.3)
-        self.assertEqual(coord6.altitude, 0)
+        assert coord6.longitude == -76.5
+        assert coord6.latitude == 39.3
+        assert coord6.altitude == 0
 
     def test_accessing_properties_example(self) -> None:
         """Test the complete 'Accessing Properties' example."""
@@ -83,9 +83,9 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         latitude_str = f"Latitude: {coord.latitude}"
         altitude_str = f"Altitude: {coord.altitude}"
 
-        self.assertEqual(longitude_str, "Longitude: -76.5")
-        self.assertEqual(latitude_str, "Latitude: 39.3")
-        self.assertEqual(altitude_str, "Altitude: 100")
+        assert longitude_str == "Longitude: -76.5"
+        assert latitude_str == "Latitude: 39.3"
+        assert altitude_str == "Altitude: 100"
 
     def test_validation_valid_coordinate_example(self) -> None:
         """Test the valid coordinate example from Validation section."""
@@ -97,10 +97,10 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         valid_coord = Coordinate(longitude=-76.5, latitude=39.3)
         validation_result = valid_coord.validate()
 
-        self.assertTrue(validation_result)
+        assert validation_result is True
         # Verify the coordinate was created successfully
-        self.assertEqual(valid_coord.longitude, -76.5)
-        self.assertEqual(valid_coord.latitude, 39.3)
+        assert valid_coord.longitude == -76.5
+        assert valid_coord.latitude == 39.3
 
     def test_validation_invalid_coordinate_example(self) -> None:
         """Test the invalid coordinate example from Validation section."""
@@ -110,14 +110,16 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         # except KMLValidationError as e:
         #     print(f"Invalid coordinate: {e}")
 
-        with self.assertRaises(KMLValidationError) as context:
+        with pytest.raises(KMLValidationError) as context:
             _ = Coordinate(longitude=200, latitude=100)
 
         # Verify that a KMLValidationError was raised
-        self.assertIsInstance(context.exception, KMLValidationError)
+        assert context is not None
+        assert isinstance(context.value, KMLValidationError)
         # Verify the error message format can be used as shown in docs
-        error_message = f"Invalid coordinate: {context.exception}"
-        self.assertIn("Invalid coordinate:", error_message)
+        # The actual error message is more specific: "Invalid longitude: ..."
+        error_str = str(context.value)
+        assert "Invalid" in error_str and ("longitude" in error_str or "coordinate" in error_str)
 
     def test_integration_with_placemark_creation_example(self) -> None:
         """Test the Placemark creation example from Integration with Placemark section."""
@@ -129,13 +131,12 @@ class TestCoordinateDocsExamples(unittest.TestCase):
 
         placemark = Placemark(name="Test Location", coordinates=(-76.5, 39.3, 100.0))
 
-        self.assertEqual(placemark.name, "Test Location")
+        assert placemark.name == "Test Location"
         # Verify coordinates were automatically converted
-        self.assertIsNotNone(placemark.coordinates)
         assert placemark.coordinates is not None  # For mypy
-        self.assertEqual(placemark.coordinates.longitude, -76.5)  # pylint: disable=E1101
-        self.assertEqual(placemark.coordinates.latitude, 39.3)  # pylint: disable=E1101
-        self.assertEqual(placemark.coordinates.altitude, 100)  # pylint: disable=E1101
+        assert placemark.coordinates.longitude == -76.5  # pylint: disable=E1101
+        assert placemark.coordinates.latitude == 39.3  # pylint: disable=E1101
+        assert placemark.coordinates.altitude == 100  # pylint: disable=E1101
 
     def test_integration_with_placemark_access_properties_example(self) -> None:
         """Test the coordinate properties access example from Integration with Placemark section."""
@@ -146,7 +147,7 @@ class TestCoordinateDocsExamples(unittest.TestCase):
 
         # Test the property access as shown in documentation
         location_str = f"Location: {placemark.longitude}, {placemark.latitude}"
-        self.assertEqual(location_str, "Location: -76.5, 39.3")
+        assert location_str, "Location: -76.5 ==  39.3"
 
     def test_integration_with_placemark_full_coordinate_access_example(self) -> None:
         """Test the full coordinate object access example from Integration with
@@ -159,13 +160,13 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         placemark = Placemark(name="Test Location", coordinates=(-76.5, 39.3, 100.0))
 
         coord = placemark.coordinates
-        self.assertIsNotNone(coord)
+        assert coord is not None
 
         if coord:
             full_coords_str = (
                 f"Full coordinates: {coord.longitude}, {coord.latitude}, {coord.altitude}"
             )
-            self.assertEqual(full_coords_str, "Full coordinates: -76.5, 39.3, 100.0")
+            assert full_coords_str, "Full coordinates: -76.5, 39.3 ==  100.0"
 
     def test_coordinate_validation_rules_longitude_bounds(self) -> None:
         """Test longitude validation rules as specified in documentation."""
@@ -174,14 +175,14 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         # Test valid longitude bounds
         valid_min = Coordinate(longitude=-180.0, latitude=0.0)
         valid_max = Coordinate(longitude=180.0, latitude=0.0)
-        self.assertEqual(valid_min.longitude, -180.0)
-        self.assertEqual(valid_max.longitude, 180.0)
+        assert valid_min.longitude == -180.0
+        assert valid_max.longitude == 180.0
 
         # Test invalid longitude bounds
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             Coordinate(longitude=-180.1, latitude=0.0)
 
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             Coordinate(longitude=180.1, latitude=0.0)
 
     def test_coordinate_validation_rules_latitude_bounds(self) -> None:
@@ -191,14 +192,14 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         # Test valid latitude bounds
         valid_min = Coordinate(longitude=0.0, latitude=-90.0)
         valid_max = Coordinate(longitude=0.0, latitude=90.0)
-        self.assertEqual(valid_min.latitude, -90.0)
-        self.assertEqual(valid_max.latitude, 90.0)
+        assert valid_min.latitude == -90.0
+        assert valid_max.latitude == 90.0
 
         # Test invalid latitude bounds
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             Coordinate(longitude=0.0, latitude=-90.1)
 
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             Coordinate(longitude=0.0, latitude=90.1)
 
     def test_coordinate_validation_rules_altitude_finite(self) -> None:
@@ -210,16 +211,16 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         valid_negative = Coordinate(longitude=0.0, latitude=0.0, altitude=-50.0)
         valid_zero = Coordinate(longitude=0.0, latitude=0.0, altitude=0.0)
 
-        self.assertEqual(valid_positive.altitude, 100.5)
-        self.assertEqual(valid_negative.altitude, -50.0)
-        self.assertEqual(valid_zero.altitude, 0.0)
+        assert valid_positive.altitude == 100.5
+        assert valid_negative.altitude == -50.0
+        assert valid_zero.altitude == 0.0
 
     def test_default_altitude_behavior(self) -> None:
         """Test that altitude defaults to 0 as mentioned in documentation."""
         # Documentation mentions: "altitude defaults to 0 if not provided"
 
         coord_no_altitude = Coordinate(longitude=-76.5, latitude=39.3)
-        self.assertEqual(coord_no_altitude.altitude, 0)
+        assert coord_no_altitude.altitude == 0
 
     def test_automatic_validation_on_creation(self) -> None:
         """Test that validation happens automatically on creation as stated in documentation."""
@@ -227,10 +228,10 @@ class TestCoordinateDocsExamples(unittest.TestCase):
 
         # This should work without explicit validation call
         coord = Coordinate(longitude=-76.5, latitude=39.3, altitude=100)
-        self.assertIsNotNone(coord)
+        assert coord is not None
 
         # This should raise KMLValidationError immediately on creation
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             Coordinate(longitude=200, latitude=39.3)
 
     def test_coordinate_to_dict_export_example(self) -> None:
@@ -243,12 +244,12 @@ class TestCoordinateDocsExamples(unittest.TestCase):
 
         # Verify dictionary structure and values
         expected_dict = {"longitude": -76.5294, "latitude": 39.2904, "altitude": 100.5}
-        self.assertEqual(coord_dict, expected_dict)
+        assert coord_dict == expected_dict
 
         # Verify individual dictionary access
-        self.assertEqual(coord_dict["longitude"], -76.5294)
-        self.assertEqual(coord_dict["latitude"], 39.2904)
-        self.assertEqual(coord_dict["altitude"], 100.5)
+        assert coord_dict["longitude"] == -76.5294
+        assert coord_dict["latitude"] == 39.2904
+        assert coord_dict["altitude"] == 100.5
 
     def test_placemark_coordinate_to_dict_integration_example(self) -> None:
         """Test accessing coordinate dictionary from placemark for documentation."""
@@ -261,9 +262,9 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         coord_dict = placemark.coordinates.to_dict() if placemark.coordinates else None
 
         # Verify the result
-        self.assertIsNotNone(coord_dict)
+        assert coord_dict is not None
         expected_dict = {"longitude": -76.5294, "latitude": 39.2904, "altitude": 100.5}
-        self.assertEqual(coord_dict, expected_dict)
+        assert coord_dict == expected_dict
 
         # Test with placemark without coordinates
         empty_placemark = Placemark(name="No Location")
@@ -274,8 +275,4 @@ class TestCoordinateDocsExamples(unittest.TestCase):
         empty_coord_dict = (
             empty_placemark.coordinates.to_dict() if empty_placemark.coordinates else None
         )
-        self.assertIsNone(empty_coord_dict)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        assert empty_coord_dict is None

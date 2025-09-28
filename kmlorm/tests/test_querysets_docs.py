@@ -6,10 +6,10 @@ are functional and produce the expected results.
 """
 
 # pylint: disable=too-many-instance-attributes
-import unittest
+
 import re
 from typing import Any, Optional, cast
-
+import pytest
 from kmlorm import KMLFile, Placemark, Folder
 from kmlorm.models.point import Coordinate
 from kmlorm.core.exceptions import (
@@ -20,10 +20,21 @@ from kmlorm.core.exceptions import (
 )
 
 
-class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-public-methods
+class TestQuerySetsDocsExamples:  # pylint: disable=too-many-public-methods
     """Test cases that validate kmlorm.core.querysets.rst documentation examples."""
 
-    def setUp(self) -> None:
+    kml: KMLFile
+    placemark1: Placemark
+    placemark2: Placemark
+    placemark3: Placemark
+    placemark4: Placemark
+    placemark5: Placemark
+    placemark6: Placemark
+    folder1: Folder
+    folder2: Folder
+
+    @pytest.fixture(autouse=True)
+    def setup_method(self) -> None:
         """Set up test data for QuerySet testing."""
         # Create a KML structure for testing
         self.kml = KMLFile()
@@ -109,10 +120,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         count_output = f"Found {visible_count} visible placemarks"
 
         # Verify the results
-        self.assertEqual(visible_count, 4)  # 4 visible placemarks
-        self.assertEqual(count_output, "Found 4 visible placemarks")
-        self.assertIn("Placemark: Capital Electric", placemark_names)
-        self.assertIn("Placemark: Headquarters", placemark_names)
+        assert visible_count == 4  # 4 visible placemarks
+        assert count_output == "Found 4 visible placemarks"
+        assert "Placemark: Capital Electric" in placemark_names
+        assert "Placemark: Headquarters" in placemark_names
 
     def test_field_lookups_basic_filtering_example(self) -> None:
         """Test the basic filtering example from Field Lookups section."""
@@ -124,12 +135,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         visible_elements = self.kml.placemarks.children().filter(visibility=True)
 
         # Verify filtering works correctly
-        self.assertEqual(len(capital_stores), 2)  # Capital Electric, Capital Hardware
-        self.assertEqual(len(visible_elements), 4)  # 4 visible placemarks
+        assert len(capital_stores) == 2  # Capital Electric, Capital Hardware
+        assert len(visible_elements) == 4  # 4 visible placemarks
 
         capital_names = [p.name for p in capital_stores if p.name]
-        self.assertIn("Capital Electric", capital_names)
-        self.assertIn("Capital Hardware", capital_names)
+        assert "Capital Electric" in capital_names
+        assert "Capital Hardware" in capital_names
 
     def test_field_lookups_multiple_filters_example(self) -> None:
         """Test the multiple filters example from Field Lookups section."""
@@ -144,11 +155,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify AND operation
-        self.assertEqual(len(visible_capital), 2)
+        assert len(visible_capital) == 2
         for placemark in visible_capital:
-            self.assertTrue(placemark.visibility)
+            assert placemark.visibility is True
             if placemark.name:
-                self.assertIn("capital", placemark.name.lower())
+                assert "capital" in placemark.name.lower()
 
     def test_field_lookups_exclusion_example(self) -> None:
         """Test the exclusion example from Field Lookups section."""
@@ -158,10 +169,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         non_capital = self.kml.placemarks.children().exclude(name__icontains="capital")
 
         # Verify exclusion works
-        self.assertEqual(len(non_capital), 4)  # 6 total - 2 capital = 4
+        assert len(non_capital) == 4  # 6 total - 2 capital = 4
         for placemark in non_capital:
             if placemark.name:
-                self.assertNotIn("capital", placemark.name.lower())
+                assert "capital" not in placemark.name.lower()
 
     def test_field_lookups_comparison_operators_example(self) -> None:
         """Test the comparison operators example from Field Lookups section."""
@@ -172,9 +183,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         visible_items = self.kml.placemarks.children().filter(visibility=True)
 
         # Verify comparison filtering works for basic fields
-        self.assertGreater(len(visible_items), 0)
+        assert len(visible_items) > 0
         for item in visible_items:
-            self.assertTrue(item.visibility)
+            assert item.visibility is True
 
     def test_field_lookups_range_queries_example(self) -> None:
         """Test the range queries example from Field Lookups section."""
@@ -189,7 +200,7 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # Test range lookup (though limited to direct fields)
         # Note: This demonstrates the range lookup mechanism even if not on coordinates
         all_items = self.kml.placemarks.children()  # Direct children only
-        self.assertGreater(len(all_items), 0)
+        assert len(all_items) > 0
 
     def test_field_lookups_list_membership_example(self) -> None:
         """Test the list membership example from Field Lookups section."""
@@ -203,10 +214,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify list membership
-        self.assertEqual(len(specific_names), 2)  # Store A and Store B exist
+        assert len(specific_names) == 2  # Store A and Store B exist
         names = [p.name for p in specific_names]
-        self.assertIn("Store A", names)
-        self.assertIn("Store B", names)
+        assert "Store A" in names
+        assert "Store B" in names
 
     def test_field_lookups_regex_example(self) -> None:
         """Test the regular expressions example from Field Lookups section."""
@@ -219,11 +230,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         phone_numbers = self.kml.placemarks.children().filter(description__regex=regex)
 
         # Verify regex filtering - Store A has phone number in description
-        self.assertEqual(len(phone_numbers), 1)
+        assert len(phone_numbers) == 1
         phone_placemark = phone_numbers[0]
-        self.assertEqual(phone_placemark.name, "Store A")
+        assert phone_placemark.name == "Store A"
         if phone_placemark.description:
-            self.assertIsNotNone(re.search(regex, phone_placemark.description))
+            assert re.search(regex, phone_placemark.description) is not None
 
     def test_getting_single_elements_get_example(self) -> None:
         """Test the get single element example from Getting Single Elements section."""
@@ -241,12 +252,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
             found_message = f"Found: {headquarters.name}"
 
             # Verify we found the right element
-            self.assertEqual(headquarters.name, "Headquarters")
-            self.assertEqual(found_message, "Found: Headquarters")
+            assert headquarters.name == "Headquarters"
+            assert found_message == "Found: Headquarters"
         except KMLElementNotFound:
-            self.fail("Headquarters should have been found")
+            pytest.fail("Headquarters should have been found")
         except KMLMultipleElementsReturned:
-            self.fail("Only one headquarters should exist")
+            pytest.fail("Only one headquarters should exist")
 
     def test_getting_single_elements_first_last_example(self) -> None:
         """Test the first/last example from Getting Single Elements section."""
@@ -261,16 +272,16 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         first_placemark = self.kml.placemarks.children().first()
         if first_placemark:
             first_message = f"First placemark: {first_placemark.name}"
-            self.assertIsNotNone(first_message)
+            assert first_message is not None
 
         last_placemark = self.kml.placemarks.children().order_by("name").last()
         if last_placemark:
             last_message = f"Last alphabetically: {last_placemark.name}"
-            self.assertIsNotNone(last_message)
+            assert last_message is not None
 
         # Verify we get results
-        self.assertIsNotNone(first_placemark)
-        self.assertIsNotNone(last_placemark)
+        assert first_placemark is not None
+        assert last_placemark is not None
 
     def test_ordering_and_data_extraction_ordering_example(self) -> None:
         """Test the ordering example from Ordering and Data Extraction section."""
@@ -289,12 +300,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         names_asc = [p.name for p in by_name if p.name]
         names_desc = [p.name for p in by_name_desc if p.name]
 
-        self.assertEqual(names_asc, sorted(names_asc))
-        self.assertEqual(names_desc, sorted(names_asc, reverse=True))
+        assert names_asc == sorted(names_asc)
+        assert names_desc, sorted(names_asc, reverse=True)
 
         # Verify complex ordering and reverse
-        self.assertIsNotNone(complex_order)
-        self.assertIsNotNone(reversed_order)
+        assert complex_order is not None
+        assert reversed_order is not None
 
     def test_ordering_and_data_extraction_values_example(self) -> None:
         """Test the values extraction example from Ordering and Data Extraction section."""
@@ -306,15 +317,15 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         name_vis_pairs = self.kml.placemarks.children().values("name", "visibility")
 
         # Verify values extraction
-        self.assertIsInstance(names_only, list)
-        self.assertIsInstance(name_vis_pairs, list)
+        assert isinstance(names_only, list)
+        assert isinstance(name_vis_pairs, list)
 
         if names_only:
-            self.assertIn("name", names_only[0])
+            assert "name" in names_only[0]
 
         if name_vis_pairs:
-            self.assertIn("name", name_vis_pairs[0])
-            self.assertIn("visibility", name_vis_pairs[0])
+            assert "name" in name_vis_pairs[0]
+            assert "visibility" in name_vis_pairs[0]
 
     def test_ordering_and_data_extraction_values_list_example(self) -> None:
         """Test the values_list example from Ordering and Data Extraction section."""
@@ -326,17 +337,17 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         name_vis_tuples = self.kml.placemarks.children().values_list("name", "visibility")
 
         # Verify values_list extraction
-        self.assertIsInstance(name_list, list)
-        self.assertIsInstance(name_vis_tuples, list)
+        assert isinstance(name_list, list)
+        assert isinstance(name_vis_tuples, list)
 
         # Flat list should contain just names
         if name_list:
-            self.assertIsInstance(name_list[0], (str, type(None)))
+            assert isinstance(name_list[0], (str, type(None)))
 
         # Tuples should contain pairs
         if name_vis_tuples:
-            self.assertIsInstance(name_vis_tuples[0], tuple)
-            self.assertEqual(len(name_vis_tuples[0]), 2)
+            assert isinstance(name_vis_tuples[0], tuple)
+            assert len(name_vis_tuples[0]) == 2
 
     def test_geospatial_queries_near_example(self) -> None:
         """Test the near query example from Geospatial Queries section."""
@@ -346,9 +357,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         nearby_stores = self.kml.placemarks.children().near(-76.6, 39.3, radius_km=25)
 
         # Verify geospatial query works - all our test placemarks should be within 25km
-        self.assertGreaterEqual(len(nearby_stores), 1)
+        assert len(nearby_stores) >= 1
         for store in nearby_stores:
-            self.assertIsNotNone(store.coordinates)
+            assert store.coordinates is not None
 
     def test_geospatial_queries_within_bounds_example(self) -> None:
         """Test the within bounds example from Geospatial Queries section."""
@@ -362,13 +373,13 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify bounding box query - all our test coordinates are within these bounds
-        self.assertGreaterEqual(len(bounded_stores), 1)
+        assert len(bounded_stores) >= 1
         for store in bounded_stores:
             if store.coordinates:
-                self.assertGreaterEqual(store.coordinates.latitude, 39.0)
-                self.assertLessEqual(store.coordinates.latitude, 39.5)
-                self.assertGreaterEqual(store.coordinates.longitude, -77.0)
-                self.assertLessEqual(store.coordinates.longitude, -76.0)
+                assert store.coordinates.latitude >= 39.0
+                assert store.coordinates.latitude <= 39.5
+                assert store.coordinates.longitude >= -77.0
+                assert store.coordinates.longitude <= -76.0
 
     def test_geospatial_queries_coordinate_filters_example(self) -> None:
         """Test the coordinate filters example from Geospatial Queries section."""
@@ -380,8 +391,8 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         valid_coords = self.kml.placemarks.children().valid_coordinates()
 
         # Verify coordinate filtering - all our test placemarks have valid coordinates
-        self.assertEqual(len(has_coords), 6)  # All placemarks have coordinates
-        self.assertEqual(len(valid_coords), 6)  # All coordinates are valid
+        assert len(has_coords) == 6  # All placemarks have coordinates
+        assert len(valid_coords) == 6  # All coordinates are valid
 
     def test_geospatial_queries_chaining_example(self) -> None:
         """Test the geospatial chaining example from Geospatial Queries section."""
@@ -401,10 +412,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify chained geospatial and attribute filtering
-        self.assertIsNotNone(nearby_visible)
+        assert nearby_visible is not None
         for placemark in nearby_visible:
-            self.assertTrue(placemark.visibility)
-            self.assertIsNotNone(placemark.coordinates)
+            assert placemark.visibility is True
+            assert placemark.coordinates is not None
 
     def test_queryset_chaining_step_by_step_example(self) -> None:
         """Test the step-by-step chaining example from QuerySet Chaining section."""
@@ -423,11 +434,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         results = list(final_query)
 
         # Verify step-by-step building
-        self.assertIsNotNone(results)
+        assert results is not None
         for result in results:
-            self.assertTrue(result.visibility)
+            assert result.visibility is True
             if result.name:
-                self.assertIn("store", result.name.lower())
+                assert "store" in result.name.lower()
 
     def test_queryset_chaining_one_chain_example(self) -> None:
         """Test the single chain example from QuerySet Chaining section."""
@@ -447,11 +458,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify single chain produces same results
-        self.assertIsNotNone(stores)
+        assert stores is not None
         for store in stores:
-            self.assertTrue(store.visibility)
+            assert store.visibility is True
             if store.name:
-                self.assertIn("store", store.name.lower())
+                assert "store" in store.name.lower()
 
     def test_queryset_properties_state_example(self) -> None:
         """Test the QuerySet properties example from QuerySet Properties section."""
@@ -469,14 +480,14 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         is_distinct_msg = f"Is distinct: {qs.is_distinct}"
 
         # Verify state properties
-        self.assertTrue(qs.is_ordered)
-        self.assertEqual(qs.order_by_fields, ["name"])
-        self.assertFalse(qs.is_distinct)
+        assert qs.is_ordered is True
+        assert qs.order_by_fields == ["name"]
+        assert qs.is_distinct is False
 
         # Verify message formatting
-        self.assertEqual(is_ordered_msg, "Is ordered: True")
-        self.assertEqual(order_fields_msg, "Order fields: ['name']")
-        self.assertEqual(is_distinct_msg, "Is distinct: False")
+        assert is_ordered_msg == "Is ordered: True"
+        assert order_fields_msg == "Order fields: ['name']"
+        assert is_distinct_msg == "Is distinct: False"
 
     def test_queryset_properties_length_existence_example(self) -> None:
         """Test the length and existence example from QuerySet Properties section."""
@@ -492,14 +503,14 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         boolean_msg = f"Boolean: {bool(qs)}"
 
         # Verify length and existence methods
-        self.assertGreater(qs.count(), 0)
-        self.assertTrue(qs.exists())
-        self.assertTrue(bool(qs))
+        assert qs.count() > 0
+        assert qs.exists() is True
+        assert bool(qs) is True
 
         # Verify message formatting
-        self.assertIn("Count:", count_msg)
-        self.assertEqual(exists_msg, "Exists: True")
-        self.assertEqual(boolean_msg, "Boolean: True")
+        assert "Count:" in count_msg
+        assert exists_msg == "Exists: True"
+        assert boolean_msg == "Boolean: True"
 
     def test_queryset_properties_indexing_slicing_example(self) -> None:
         """Test the indexing and slicing example from QuerySet Properties section."""
@@ -514,16 +525,16 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         first_five = qs[:5]
 
         # Verify indexing and slicing
-        self.assertIsNotNone(first_element)
-        self.assertIsNotNone(first_five)
-        self.assertLessEqual(len(first_five), 5)
+        assert first_element is not None
+        assert first_five is not None
+        assert len(first_five) <= 5
 
         # Verify types
-        self.assertIsInstance(first_element, type(self.placemark1))
+        assert isinstance(first_element, type(self.placemark1))
         # pylint: disable=import-outside-toplevel
         from kmlorm.core.querysets import KMLQuerySet
 
-        self.assertIsInstance(first_five, KMLQuerySet)
+        assert isinstance(first_five, KMLQuerySet)
 
     def test_advanced_usage_conditional_filtering_example(self) -> None:
         """Test the conditional filtering example from Advanced Usage section."""
@@ -540,9 +551,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
             qs = qs.filter(name__icontains=search_term)
 
         # Verify conditional filtering
-        self.assertEqual(len(qs), 1)  # Should find the restaurant
+        assert len(qs) == 1  # Should find the restaurant
         restaurant = qs[0]
-        self.assertEqual(restaurant.name, "Restaurant")
+        assert restaurant.name == "Restaurant"
 
     def test_advanced_usage_pagination_example(self) -> None:
         """Test the pagination example from Advanced Usage section."""
@@ -562,9 +573,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         page_results = qs[start:end]
 
         # Verify pagination logic
-        self.assertEqual(start, 3)  # (2-1) * 3 = 3
-        self.assertEqual(end, 6)  # 3 + 3 = 6
-        self.assertLessEqual(len(page_results), page_size)
+        assert start == 3  # (2-1 * 3 = 3
+        assert end == 6  # 3 + 3 = 6
+        assert len(page_results) <= page_size
 
     def test_advanced_usage_complex_coordinate_filtering_example(self) -> None:
         """Test the complex coordinate filtering example from Advanced Usage section."""
@@ -577,14 +588,14 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         nearby_downtown = downtown_area.near(-76.6, 39.25, radius_km=5)
 
         # Verify complex coordinate filtering
-        self.assertIsNotNone(downtown_area)
-        self.assertIsNotNone(nearby_downtown)
+        assert downtown_area is not None
+        assert nearby_downtown is not None
 
         # Check that results are within the specified bounds
         for placemark in downtown_area:
             if placemark.coordinates:
-                self.assertGreaterEqual(placemark.coordinates.latitude, 39.2)
-                self.assertLessEqual(placemark.coordinates.latitude, 39.3)
+                assert placemark.coordinates.latitude >= 39.2
+                assert placemark.coordinates.latitude <= 39.3
 
     def test_advanced_usage_data_analysis_example(self) -> None:
         """Test the data analysis example from Advanced Usage section."""
@@ -602,12 +613,12 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         visibility_ratio = visible_count / total_count if total_count > 0 else 0
 
         # Verify data analysis
-        self.assertIsInstance(all_names, list)
-        self.assertIsInstance(unique_names, set)
-        self.assertGreater(total_count, 0)
-        self.assertGreater(visible_count, 0)
-        self.assertGreater(visibility_ratio, 0)
-        self.assertLessEqual(visibility_ratio, 1)
+        assert isinstance(all_names, list)
+        assert isinstance(unique_names, set)
+        assert total_count > 0
+        assert visible_count > 0
+        assert visibility_ratio > 0
+        assert visibility_ratio <= 1
 
     def test_performance_lazy_evaluation_example(self) -> None:
         """Test the lazy evaluation example from Performance Considerations section."""
@@ -622,9 +633,9 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         results = list(qs)
 
         # Verify lazy evaluation worked
-        self.assertIsNotNone(qs)
-        self.assertIsInstance(results, list)
-        self.assertGreater(len(results), 0)
+        assert qs is not None
+        assert isinstance(results, list)
+        assert len(results) > 0
 
     def test_performance_exists_vs_len_example(self) -> None:
         """Test the exists vs len example from Performance Considerations section."""
@@ -643,8 +654,8 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify both produce same result
-        self.assertEqual(has_stores_efficient, has_stores_inefficient)
-        self.assertTrue(has_stores_efficient)
+        assert has_stores_efficient == has_stores_inefficient
+        assert has_stores_efficient is True
 
     def test_performance_count_vs_len_example(self) -> None:
         """Test the count vs len example from Performance Considerations section."""
@@ -663,8 +674,8 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         )
 
         # Verify both produce same result
-        self.assertEqual(store_count_efficient, store_count_inefficient)
-        self.assertGreater(store_count_efficient, 0)
+        assert store_count_efficient == store_count_inefficient
+        assert store_count_efficient > 0
 
     def test_common_patterns_safe_element_retrieval_example(self) -> None:
         """Test the safe element retrieval example from Common Patterns section."""
@@ -689,10 +700,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         nonexistent = get_element_safely(self.kml.placemarks.children(), name="Nonexistent")
 
         # Verify safe retrieval
-        self.assertIsNotNone(headquarters)
         assert headquarters is not None
-        self.assertEqual(headquarters.name, "Headquarters")
-        self.assertIsNone(nonexistent)
+        assert headquarters is not None
+        assert headquarters.name == "Headquarters"
+        assert nonexistent is None
 
     def test_common_patterns_coordinate_validation_example(self) -> None:
         """Test the coordinate validation example from Common Patterns section."""
@@ -702,15 +713,15 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         valid_locations = self.kml.placemarks.children().has_coordinates().valid_coordinates()
 
         # Verify coordinate validation methods work
-        self.assertGreater(len(valid_locations), 0)
+        assert len(valid_locations) > 0
         for location in valid_locations:
-            self.assertIsNotNone(location.coordinates)
+            assert location.coordinates is not None
             if location.coordinates:
                 # Verify these are valid coordinates within normal ranges
-                self.assertGreaterEqual(location.coordinates.latitude, -90)
-                self.assertLessEqual(location.coordinates.latitude, 90)
-                self.assertGreaterEqual(location.coordinates.longitude, -180)
-                self.assertLessEqual(location.coordinates.longitude, 180)
+                assert location.coordinates.latitude >= -90
+                assert location.coordinates.latitude <= 90
+                assert location.coordinates.longitude >= -180
+                assert location.coordinates.longitude <= 180
 
     def test_common_patterns_geographic_analysis_example(self) -> None:
         """Test the geographic analysis example from Common Patterns section."""
@@ -730,10 +741,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         analysis_msg = f"Cluster analysis: {visible_in_cluster}/{total_in_cluster} visible"
 
         # Verify geographic analysis
-        self.assertGreater(total_in_cluster, 0)
-        self.assertGreaterEqual(visible_in_cluster, 0)
-        self.assertLessEqual(visible_in_cluster, total_in_cluster)
-        self.assertIn("Cluster analysis:", analysis_msg)
+        assert total_in_cluster > 0
+        assert visible_in_cluster >= 0
+        assert visible_in_cluster <= total_in_cluster
+        assert "Cluster analysis:" in analysis_msg
 
     def test_common_patterns_data_export_example(self) -> None:
         """Test the data export example from Common Patterns section."""
@@ -753,10 +764,10 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         }
 
         # Verify summary generation
-        self.assertEqual(summary["total_placemarks"], 6)
-        self.assertGreater(summary["visible_placemarks"], 0)
-        self.assertEqual(summary["placemarks_with_coords"], 6)
-        self.assertGreater(summary["unique_names"], 0)
+        assert summary["total_placemarks"] == 6
+        assert summary["visible_placemarks"] > 0
+        assert summary["placemarks_with_coords"] == 6
+        assert summary["unique_names"] > 0
 
         # Test store data export
         store_data = (
@@ -765,11 +776,11 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
             .values("name", "description", "visibility")
         )
 
-        self.assertIsInstance(store_data, list)
+        assert isinstance(store_data, list)
         if store_data:
-            self.assertIn("name", store_data[0])
-            self.assertIn("description", store_data[0])
-            self.assertIn("visibility", store_data[0])
+            assert "name" in store_data[0]
+            assert "description" in store_data[0]
+            assert "visibility" in store_data[0]
 
     def test_error_handling_query_exceptions_example(self) -> None:
         """Test the query exceptions example from Error Handling section."""
@@ -782,17 +793,17 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         #     print("Multiple stores found - query was not specific enough")
 
         # Test KMLElementNotFound
-        with self.assertRaises(KMLElementNotFound):
+        with pytest.raises(KMLElementNotFound):
             _ = self.kml.placemarks.children().get(name="Nonexistent Store")
 
         # Test successful get
         try:
             unique_store = self.kml.placemarks.children().get(name="Headquarters")
-            self.assertEqual(unique_store.name, "Headquarters")
+            assert unique_store.name == "Headquarters"
         except KMLElementNotFound:
-            self.fail("Headquarters should exist")
+            pytest.fail("Headquarters should exist")
         except KMLMultipleElementsReturned:
-            self.fail("Only one Headquarters should exist")
+            pytest.fail("Only one Headquarters should exist")
 
     def test_error_handling_coordinate_validation_example(self) -> None:
         """Test the coordinate validation example from Error Handling section."""
@@ -803,16 +814,16 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         # pylint: disable=import-outside-toplevel
         from kmlorm.core.exceptions import KMLValidationError
 
-        with self.assertRaises(KMLValidationError):
+        with pytest.raises(KMLValidationError):
             # This will raise during Coordinate creation in the near method
             _ = self.kml.placemarks.children().near(200, 100, radius_km=10)
 
         # Test valid coordinates work
         try:
             nearby = self.kml.placemarks.children().near(-76.6, 39.3, radius_km=10)
-            self.assertIsNotNone(nearby)
+            assert nearby is not None
         except (KMLInvalidCoordinates, KMLValidationError):
-            self.fail("Valid coordinates should not raise exception")
+            pytest.fail("Valid coordinates should not raise exception")
 
     def test_error_handling_query_error_example(self) -> None:
         """Test the general query error example from Error Handling section."""
@@ -829,10 +840,6 @@ class TestQuerySetsDocsExamples(unittest.TestCase):  # pylint: disable=too-many-
         try:
             # Test with a field that should work
             result = self.kml.placemarks.children().filter(name="Store A")
-            self.assertIsNotNone(result)
+            assert result is not None
         except KMLQueryError:
-            self.fail("Valid query should not raise KMLQueryError")
-
-
-if __name__ == "__main__":
-    unittest.main()
+            pytest.fail("Valid query should not raise KMLQueryError")

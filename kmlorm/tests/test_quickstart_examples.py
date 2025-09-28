@@ -301,6 +301,62 @@ class TestQuickstartExamples:
         assert rosedale["longitude"] == -76.5
         assert rosedale["latitude"] == 39.3
 
+    def test_spatial_calculations(self) -> None:
+        """Test spatial calculations example from quickstart.rst lines 176-203."""
+        from kmlorm.spatial import DistanceUnit
+
+        # Create KML with two stores for testing
+        spatial_kml = """<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <Placemark>
+      <name>Store A</name>
+      <Point><coordinates>-76.5,39.3,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Store B</name>
+      <Point><coordinates>-76.6,39.4,0</coordinates></Point>
+    </Placemark>
+  </Document>
+</kml>"""
+
+        kml = KMLFile.from_string(spatial_kml)
+
+        # EXACT CODE FROM quickstart.rst: Spatial Calculations section
+        # Get two placemarks
+        store1 = kml.placemarks.get(name='Store A')
+        store2 = kml.placemarks.get(name='Store B')
+
+        # Calculate distance (default: kilometers)
+        distance_km = store1.distance_to(store2)
+        print(f"Distance: {distance_km:.1f} km")
+
+        # Calculate in different units
+        distance_miles = store1.distance_to(store2, unit=DistanceUnit.MILES)
+        print(f"Distance: {distance_miles:.1f} miles")
+
+        # Calculate bearing (compass direction)
+        bearing = store1.bearing_to(store2)
+        print(f"Direction: {bearing:.1f}°")
+
+        # Find midpoint between locations
+        midpoint = store1.midpoint_to(store2)
+        assert midpoint is not None
+        print(f"Midpoint: {midpoint.longitude:.4f}, {midpoint.latitude:.4f}")
+
+        # Distance to specific coordinates (tuple or list)
+        baltimore = (-76.6, 39.3)
+        distance = store1.distance_to(baltimore)
+        print(f"Distance to Baltimore: {distance:.1f} km")
+
+        # Verify the code worked
+        assert distance_km is not None and distance_km > 0
+        assert distance_miles is not None and distance_miles > 0
+        assert bearing is not None and 0 <= bearing <= 360
+        assert midpoint is not None
+        assert hasattr(midpoint, 'longitude') and hasattr(midpoint, 'latitude')
+        assert distance is not None and distance >= 0
+
     def test_geospatial_queries(self) -> None:
         """Test geospatial query methods (quickstart example)."""
         # From quickstart.rst: Geospatial Queries section
