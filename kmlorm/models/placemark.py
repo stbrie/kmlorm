@@ -6,8 +6,7 @@ with coordinates and extended attributes from KML files.
 """
 
 # pylint: disable=too-many-arguments, too-many-positional-arguments
-import math
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Union, List
 
 from kmlorm.core.managers import PlacemarkManager
 from .base import KMLElement
@@ -146,70 +145,115 @@ class Placemark(KMLElement):
         )
         return base_dict
 
-    def distance_to(self, other: Union["Placemark", Tuple[float, float]]) -> Optional[float]:
+    def get_coordinates(self) -> Optional['Coordinate']:
         """
-        Calculate distance to another placemark or coordinates.
+        Return the coordinate representation of this placemark.
 
-        Args:
-            other: Another Placemark or (longitude, latitude) tuple
+        This method satisfies the HasCoordinates protocol, allowing Placemark
+        objects to be used directly in spatial calculations.
 
         Returns:
-            Distance in kilometers, or None if coordinates unavailable
+            The Coordinate object from the point, or None if no point/coordinates exist
+        """
+        if self.point and self.point.coordinates:
+            return self.point.coordinates
+        return None
+
+    def distance_to(
+        self,
+        other: Union['Coordinate', 'Point', "Placemark", Tuple[float, float], list],
+        unit: Optional['DistanceUnit'] = None
+    ) -> Optional[float]:
+        """
+        Calculate distance to another spatial object.
+
+        Args:
+            other: Target object with coordinates (Coordinate, Point, Placemark, or tuple/list)
+            unit: Distance unit (defaults to kilometers)
+
+        Returns:
+            Distance in specified units, or None if this placemark or target has no coordinates
+
+        Examples:
+            >>> placemark1 = Placemark(name="NYC", coordinates=(-74.006, 40.7128))
+            >>> placemark2 = Placemark(name="London", coordinates=(-0.1276, 51.5074))
+            >>> distance = placemark1.distance_to(placemark2)
+            >>> print(f"Distance: {distance:.1f} km")
+
+            >>> # Different units
+            >>> from kmlorm.spatial import DistanceUnit
+            >>> distance_miles = placemark1.distance_to(placemark2, unit=DistanceUnit.MILES)
+
+            >>> # Works with Point and Coordinate objects too
+            >>> from kmlorm.models.point import Point, Coordinate
+            >>> point = Point(coordinates=(0, 0))
+            >>> coord = Coordinate(longitude=1, latitude=1)
+            >>> distance_to_point = placemark1.distance_to(point)
+            >>> distance_to_coord = placemark1.distance_to(coord)
         """
         if not self.has_coordinates:
             return None
 
-        if isinstance(other, Placemark):
-            if not other.has_coordinates:
-                return None
-            # Type assertion: we've checked has_coordinates for other
-            assert other.longitude is not None and other.latitude is not None
-            other_coords = (other.longitude, other.latitude)
-        else:
-            other_coords = other
-            # Validate coordinate tuple length for user-provided coordinates
-            if len(other_coords) < 2:
-                return None  # type: ignore[unreachable] # Defensive programming for user input
+        # Use the point's spatial functionality if available
+        if self.point:
+            return self.point.distance_to(other, unit)
 
-        # Type assertion: we've already checked has_coordinates
-        assert self.longitude is not None and self.latitude is not None
-        return self._haversine_distance(
-            self.longitude,
-            self.latitude,
-            float(other_coords[0]),
-            float(other_coords[1]),
-        )
+        return None
 
-    def bearing_to(self, other: Union["Placemark", Tuple[float, float]]) -> Optional[float]:
+    def bearing_to(
+        self,
+        other: Union['Coordinate', 'Point', "Placemark", Tuple[float, float], list]
+    ) -> Optional[float]:
         """
-        Calculate bearing to another placemark or coordinates.
+        Calculate bearing to another spatial object.
 
         Args:
-            other: Another Placemark or (longitude, latitude) tuple
+            other: Target object with coordinates
 
         Returns:
-            Bearing in degrees (0-360), or None if coordinates unavailable
+            Initial bearing in degrees (0-360), or None if this placemark or target has no coordinates
+            0° = North, 90° = East, 180° = South, 270° = West
+
+        Examples:
+            >>> placemark1 = Placemark(name="Start", coordinates=(0, 0))
+            >>> placemark2 = Placemark(name="East", coordinates=(1, 0))
+            >>> bearing = placemark1.bearing_to(placemark2)  # Should be ~90°
         """
         if not self.has_coordinates:
             return None
 
-        if isinstance(other, Placemark):
-            if not other.has_coordinates:
-                return None
-            # Type assertion: we've checked has_coordinates for other
-            assert other.longitude is not None and other.latitude is not None
-            other_coords = (other.longitude, other.latitude)
-        else:
-            other_coords = other
-            # Validate coordinate tuple length for user-provided coordinates
-            if len(other_coords) < 2:
-                return None  # type: ignore[unreachable] # Defensive programming for user input
+        # Use the point's spatial functionality if available
+        if self.point:
+            return self.point.bearing_to(other)
 
-        # Type assertion: we've already checked has_coordinates
-        assert self.longitude is not None and self.latitude is not None
-        return self._calculate_bearing(
-            self.longitude, self.latitude, float(other_coords[0]), float(other_coords[1])
-        )
+        return None
+
+    def midpoint_to(
+        self,
+        other: Union['Coordinate', 'Point', "Placemark", Tuple[float, float], list]
+    ) -> Optional['Coordinate']:
+        """
+        Find geographic midpoint to another spatial object.
+
+        Args:
+            other: Target object with coordinates
+
+        Returns:
+            Coordinate at the midpoint, or None if this placemark or target has no coordinates
+
+        Examples:
+            >>> placemark1 = Placemark(name="Start", coordinates=(0, 0))
+            >>> placemark2 = Placemark(name="End", coordinates=(2, 2))
+            >>> midpoint = placemark1.midpoint_to(placemark2)
+        """
+        if not self.has_coordinates:
+            return None
+
+        # Use the point's spatial functionality if available
+        if self.point:
+            return self.point.midpoint_to(other)
+
+        return None
 
     def validate(self) -> bool:
         """
@@ -241,54 +285,3 @@ class Placemark(KMLElement):
 
         return True
 
-    def _haversine_distance(self, lon1: float, lat1: float, lon2: float, lat2: float) -> float:
-        """
-        Calculate the great circle distance between two points.
-
-        Args:
-            lon1, lat1: First point coordinates
-            lon2, lat2: Second point coordinates
-
-        Returns:
-            Distance in kilometers
-        """
-        # Convert to radians
-        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-
-        # Haversine formula
-        dlat = lat2 - lat1
-        dlon = lon2 - lon1
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-        c = 2 * math.asin(math.sqrt(a))
-
-        # Earth radius in kilometers
-        r = 6371
-
-        return c * r
-
-    def _calculate_bearing(self, lon1: float, lat1: float, lon2: float, lat2: float) -> float:
-        """
-        Calculate the bearing from one point to another.
-
-        Args:
-            lon1, lat1: Starting point coordinates
-            lon2, lat2: Destination point coordinates
-
-        Returns:
-            Bearing in degrees (0-360)
-        """
-        # Convert to radians
-        lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
-
-        # Calculate bearing
-        dlon = lon2 - lon1
-        y = math.sin(dlon) * math.cos(lat2)
-        x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
-
-        bearing = math.atan2(y, x)
-
-        # Convert to degrees and normalize to 0-360
-        bearing = math.degrees(bearing)
-        bearing = (bearing + 360) % 360
-
-        return bearing

@@ -13,6 +13,7 @@ Core Components
    models
    querysets
    coordinates
+   spatial
    exceptions
 
 Quick Navigation
@@ -30,6 +31,9 @@ Quick Navigation
 **Coordinates & Geometry**
    :doc:`coordinates` - Coordinate validation and geometry handling
 
+**Spatial Calculations**
+   :doc:`spatial` - Distance calculations, bearing, and geospatial operations
+
 **Error Handling**
    :doc:`exceptions` - Exception classes and error handling patterns
 
@@ -45,6 +49,7 @@ functionality for geospatial data manipulation.
 * **Familiar API**: Django-style ``.objects.all()``, ``.filter()``, ``.get()`` methods
 * **Type Safety**: Full type annotation support throughout the API
 * **Geospatial Queries**: Built-in spatial operations like ``.near()`` and ``.within_bounds()``
+* **Spatial Calculations**: Distance, bearing, and midpoint calculations with multiple strategies
 * **Flexible Loading**: Load KML from files, URLs, or strings
 * **Robust Validation**: Automatic coordinate and data validation
 

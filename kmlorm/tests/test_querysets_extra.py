@@ -404,8 +404,9 @@ class TestKMLQuerySetExtra:
 
         # haversine distance between same points is ~0
         assert coords is not None  # Ensure coords is not None for type checking
-        d = qs._haversine_distance(coords, coords)
-        assert abs(d) < 1e-6
+        from ..spatial.calculations import SpatialCalculations
+        d = SpatialCalculations.distance_between(coords, coords)
+        assert d is not None and abs(d) < 1e-6
 
     def test_apply_lookup_regex_and_membership(self) -> None:
         """
@@ -626,8 +627,9 @@ class TestKMLQuerySetExtra:
         qs: KMLQuerySet = KMLQuerySet([])
         p = _Coordinate(longitude=0.0, latitude=0.0)
         q = _Coordinate(longitude=0.0, latitude=1.0)
-        d = qs._haversine_distance(p, q)
-        assert d > 0
+        from ..spatial.calculations import SpatialCalculations
+        d = SpatialCalculations.distance_between(p, q)
+        assert d is not None and d > 0
 
     def test_comparison_lookups_and_isnull_false(self) -> None:
         """

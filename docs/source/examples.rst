@@ -11,10 +11,11 @@ Analyze store locations and find optimal coverage areas:
 .. code-block:: python
 
    from kmlorm import KMLFile
+   from kmlorm.spatial import DistanceUnit, SpatialCalculations
    import pandas as pd
 
    def analyze_store_coverage(kml_file_path, city_center, max_distance=25):
-       """Analyze store coverage for a city."""
+       """Analyze store coverage for a city using spatial calculations."""
        kml = KMLFile.from_file(kml_file_path)
 
        # Get all stores (including those in folders)
@@ -25,42 +26,42 @@ Analyze store locations and find optimal coverage areas:
        city_stores = stores.near(*city_center, radius_km=max_distance)
        print(f"Stores within {max_distance}km of city center: {city_stores.count()}")
 
-       # Analyze coverage gaps
+       # Analyze coverage using built-in spatial calculations
        coverage_analysis = []
        for store in city_stores:
            if store.coordinates:
-               distance_to_center = calculate_distance(store.coordinates, city_center)
+               # Use built-in distance calculation
+               distance_to_center = store.distance_to(city_center)
+               bearing_to_center = store.bearing_to(city_center)
+
                coverage_analysis.append({
                    'name': store.name,
                    'address': store.address,
                    'distance_to_center': distance_to_center,
+                   'bearing_to_center': bearing_to_center,
                    'longitude': store.longitude,
                    'latitude': store.latitude,
                })
 
        # Convert to DataFrame for analysis
-       [TODO: a "closest to" manager method seems like it fits in with our needs, but maybe we want a separate,
-       lightweight package for geographical calculations, like our distance_to() method, within_bounds() method, etc.
-       We should discuss options here.]
        df = pd.DataFrame(coverage_analysis)
        df = df.sort_values('distance_to_center')
 
        print("\nClosest stores to city center:")
        print(df.head().to_string(index=False))
 
+       # Find the store closest to city center
+       if not df.empty:
+           closest_store = city_stores[0]  # First in sorted list
+           print(f"\nClosest store: {closest_store.name}")
+           print(f"Distance: {closest_store.distance_to(city_center):.1f} km")
+           print(f"Distance: {closest_store.distance_to(city_center, unit=DistanceUnit.MILES):.1f} miles")
+
+           # Calculate midpoint between city center and closest store
+           midpoint = closest_store.midpoint_to(city_center)
+           print(f"Midpoint coordinates: {midpoint.longitude:.4f}, {midpoint.latitude:.4f}")
+
        return df
-
-    [TODO: note that Placemark has a distance_to() that uses haversine distance, implementing a 
-    calculation is not strictly necessary]
-
-   def calculate_distance(coord1, coord2):
-       """Calculate distance between two coordinate points."""
-       # Using the Coordinate object's distance calculation
-       from kmlorm.models.point import Coordinate
-       c1 = Coordinate.from_any(coord1)
-       c2 = Coordinate.from_any(coord2)
-       # You would implement actual distance calculation here
-       return 0  # Placeholder
 
    # Usage
    baltimore_center = (-76.6, 39.3)
@@ -102,26 +103,23 @@ Extract and analyze route data from KML paths:
        return route_analysis
 
    def estimate_route_length(coordinates):
-       """Estimate total route length."""
+       """Estimate total route length using spatial calculations."""
+       from kmlorm.models.point import Coordinate
+
        if len(coordinates) < 2:
            return 0
 
        total_length = 0
        for i in range(1, len(coordinates)):
            # Calculate distance between consecutive points
-           # This is a simplified calculation
-           [TODO: we have a distance_to() for Placemark]
-           prev_coord = coordinates[i-1]
-           curr_coord = coordinates[i]
-           segment_length = calculate_segment_distance(prev_coord, curr_coord)
+           prev_coord = Coordinate(longitude=coordinates[i-1][0], latitude=coordinates[i-1][1])
+           curr_coord = Coordinate(longitude=coordinates[i][0], latitude=coordinates[i][1])
+
+           # Use built-in distance calculation
+           segment_length = prev_coord.distance_to(curr_coord)
            total_length += segment_length
 
        return total_length
-
-   def calculate_segment_distance(coord1, coord2):
-       """Calculate distance between two points."""
-       # Implement proper distance calculation
-       return 1.0  # Placeholder
 
    # Usage
    route_data = analyze_delivery_routes('delivery_routes.kml')
@@ -250,7 +248,9 @@ Perform spatial analysis on KML data:
 .. code-block:: python
 
    def find_clusters(kml_file_path, cluster_radius=5):
-       """Find clusters of nearby placemarks."""
+       """Find clusters of nearby placemarks using spatial calculations."""
+       from kmlorm.spatial import SpatialCalculations
+
        kml = KMLFile.from_file(kml_file_path)
 
        placemarks_with_coords = kml.placemarks.all().has_coordinates()
@@ -261,25 +261,32 @@ Perform spatial analysis on KML data:
            if i in processed:
                continue
 
-           # Find nearby placemarks
+           # Find nearby placemarks using built-in spatial calculations
            nearby = []
            center = (placemark.longitude, placemark.latitude)
 
            for j, other in enumerate(placemarks_with_coords):
                if j != i and j not in processed:
-                   distance = calculate_distance(
-                       (placemark.longitude, placemark.latitude),
-                       (other.longitude, other.latitude)
-                   )
+                   # Use built-in distance calculation
+                   distance = placemark.distance_to(other)
                    if distance <= cluster_radius:
                        nearby.append((j, other))
 
            if nearby:
+               # Calculate cluster centroid using midpoint calculations
+               cluster_points = [placemark] + [p[1] for p in nearby]
+
+               # Calculate average bearing to understand cluster spread
+               bearings = [placemark.bearing_to(other) for _, other in nearby]
+               avg_bearing = sum(bearings) / len(bearings) if bearings else 0
+
                cluster = {
                    'center_placemark': placemark,
                    'nearby_placemarks': [p[1] for p in nearby],
                    'total_count': len(nearby) + 1,
-                   'center_coordinates': center
+                   'center_coordinates': center,
+                   'average_bearing': avg_bearing,
+                   'max_distance': max(placemark.distance_to(other) for _, other in nearby) if nearby else 0
                }
                clusters.append(cluster)
                processed.add(i)
@@ -293,6 +300,7 @@ Perform spatial analysis on KML data:
            print(f"Cluster {i+1}: {cluster['total_count']} placemarks")
            print(f"  Center: {cluster['center_placemark'].name}")
            print(f"  Location: {cluster['center_coordinates']}")
+           print(f"  Max distance from center: {cluster['max_distance']:.1f} km")
 
        return clusters
 

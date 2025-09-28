@@ -168,6 +168,40 @@ Access coordinate data from placemarks:
        if placemark.coordinates:
            print(f"{placemark.name}: {placemark.longitude}, {placemark.latitude}")
 
+Spatial Calculations
+~~~~~~~~~~~~~~~~~~~~
+
+Calculate distances, bearings, and midpoints between geographic locations:
+
+.. code-block:: python
+
+   from kmlorm.spatial import DistanceUnit
+
+   # Get two placemarks
+   store1 = kml.placemarks.get(name='Store A')
+   store2 = kml.placemarks.get(name='Store B')
+
+   # Calculate distance (default: kilometers)
+   distance_km = store1.distance_to(store2)
+   print(f"Distance: {distance_km:.1f} km")
+
+   # Calculate in different units
+   distance_miles = store1.distance_to(store2, unit=DistanceUnit.MILES)
+   print(f"Distance: {distance_miles:.1f} miles")
+
+   # Calculate bearing (compass direction)
+   bearing = store1.bearing_to(store2)
+   print(f"Direction: {bearing:.1f}°")
+
+   # Find midpoint between locations
+   midpoint = store1.midpoint_to(store2)
+   print(f"Midpoint: {midpoint.longitude:.4f}, {midpoint.latitude:.4f}")
+
+   # Distance to specific coordinates (tuple or list)
+   baltimore = (-76.6, 39.3)
+   distance = store1.distance_to(baltimore)
+   print(f"Distance to Baltimore: {distance:.1f} km")
+
 Geospatial Queries
 ~~~~~~~~~~~~~~~~~~
 
@@ -255,7 +289,7 @@ Here's a complete example that demonstrates common usage patterns:
            print(f"Unexpected error: {e}")
 
    def calculate_distance_to_baltimore(placemark):
-       # Simple distance calculation (you might use a proper geospatial library)
+       # Using built-in spatial calculations
        if placemark.coordinates:
            # Baltimore coordinates: -76.6, 39.3
            baltimore_coord = (-76.6, 39.3)

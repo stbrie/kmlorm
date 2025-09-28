@@ -469,6 +469,7 @@ class KMLQuerySet(Generic[T]):
             New QuerySet with nearby elements
         """
         from ..models.point import Coordinate  # pylint: disable=import-outside-toplevel
+        from ..spatial.calculations import SpatialCalculations  # pylint: disable=import-outside-toplevel
 
         center = Coordinate(longitude=longitude, latitude=latitude, altitude=0.0)
 
@@ -480,8 +481,8 @@ class KMLQuerySet(Generic[T]):
             try:
                 coords = self._point_coords(element)
                 if coords:
-                    distance = self._haversine_distance(center, coords)
-                    if distance <= radius_km:
+                    distance = SpatialCalculations.distance_between(center, coords)
+                    if distance is not None and distance <= radius_km:
                         filtered_elements.append(element)
             except (ValueError, TypeError):
                 continue
@@ -747,29 +748,3 @@ class KMLQuerySet(Generic[T]):
             )
             return None
 
-    def _haversine_distance(self, c1: "Coordinate", c2: "Coordinate") -> float:
-        """
-        Calculate the great circle distance between two points on Earth.
-
-        Args:
-            lon1, lat1: First point coordinates
-            lon2, lat2: Second point coordinates
-
-        Returns:
-            Distance in kilometers
-        """
-        # Convert to radians
-        lat1_r, lon1_r, lat2_r, lon2_r = map(
-            math.radians, [c1.latitude, c1.longitude, c2.latitude, c2.longitude]
-        )
-
-        # Haversine formula
-        dlat = lat2_r - lat1_r
-        dlon = lon2_r - lon1_r
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1_r) * math.cos(lat2_r) * math.sin(dlon / 2) ** 2
-        c = 2 * math.asin(math.sqrt(a))
-
-        # Earth radius in kilometers
-        r = 6371
-
-        return c * r

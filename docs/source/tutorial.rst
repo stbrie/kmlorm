@@ -109,47 +109,116 @@ Query across all folders simultaneously:
 those in nested folders. Use ``kml.placemarks.children()`` for direct
 children only.
 
-Coordinate Operations
----------------------
+Spatial Operations
+------------------
 
 Distance Calculations
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. note:: **About Distance Calculations**
 
-   KML ORM calculates **straight-line distances** (great circle distances) between geographic points,
-   not travel distances by vehicle or foot. These are "as the crow flies" distances that account
-   for Earth's curvature but ignore terrain, roads, and other travel constraints.
+   KML ORM provides comprehensive spatial calculations with multiple strategies:
 
-   * **Accuracy**: Within 0.5% for distances up to hundreds of kilometers
-   * **Method**: Haversine formula using Earth's mean radius (6371 km)
-   * **Limitations**: 2D calculations only (altitude ignored), spherical Earth assumption
+   * **Haversine (default)**: Great circle distances with 0.5% accuracy
+   * **Vincenty**: High-precision geodesic calculations (±0.5mm accuracy)
+   * **Euclidean**: Fast approximation for small distances (<100km)
 
-   For detailed technical information, see :doc:`api/querysets` under "Distance Calculation Details".
+   All calculations use the WGS84 ellipsoid model and handle edge cases like
+   date line crossing and polar regions correctly.
 
-Calculate distances between placemarks:
+   For detailed technical information, see :doc:`api/spatial`.
+
+Calculate distances between placemarks with different units:
 
 .. code-block:: python
+
+   from kmlorm.spatial import DistanceUnit
 
    # Get two placemarks (includes nested)
    store1 = kml.placemarks.all().get(name__contains='Rosedale')
    store2 = kml.placemarks.all().get(name__contains='Timonium')
 
-   # Calculate distance
+   # Calculate distance in various units
    if store1.coordinates and store2.coordinates:
-       distance = store1.distance_to(store2)
-       print(f"Distance: {distance:.2f} km")
+       km = store1.distance_to(store2)
+       miles = store1.distance_to(store2, unit=DistanceUnit.MILES)
+       meters = store1.distance_to(store2, unit=DistanceUnit.METERS)
 
-Bearing Calculations
-~~~~~~~~~~~~~~~~~~~~
+       print(f"Distance: {km:.2f} km")
+       print(f"Distance: {miles:.2f} miles")
+       print(f"Distance: {meters:.0f} meters")
 
-Calculate bearing between points:
+   # Distance to specific coordinates (tuple or list)
+   baltimore = (-76.6, 39.3)
+   distance = store1.distance_to(baltimore)
+   print(f"Distance to Baltimore: {distance:.1f} km")
+
+Bearing and Navigation
+~~~~~~~~~~~~~~~~~~~~~~
+
+Calculate bearings and midpoints for navigation:
 
 .. code-block:: python
 
    if store1.coordinates and store2.coordinates:
+       # Calculate bearing (compass direction)
        bearing = store1.bearing_to(store2)
        print(f"Bearing: {bearing:.1f}°")
+
+       # Determine cardinal direction
+       if bearing < 22.5 or bearing >= 337.5:
+           direction = "North"
+       elif bearing < 67.5:
+           direction = "Northeast"
+       elif bearing < 112.5:
+           direction = "East"
+       elif bearing < 157.5:
+           direction = "Southeast"
+       elif bearing < 202.5:
+           direction = "South"
+       elif bearing < 247.5:
+           direction = "Southwest"
+       elif bearing < 292.5:
+           direction = "West"
+       else:
+           direction = "Northwest"
+
+       print(f"Head {direction} ({bearing:.1f}°)")
+
+       # Find geographic midpoint
+       midpoint = store1.midpoint_to(store2)
+       print(f"Midpoint: {midpoint.longitude:.4f}, {midpoint.latitude:.4f}")
+
+Bulk Distance Operations
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Efficiently calculate distances to many locations:
+
+.. code-block:: python
+
+   from kmlorm.spatial import SpatialCalculations
+
+   # Center location (Baltimore)
+   center = (-76.6, 39.3)
+
+   # Get all stores with coordinates
+   stores = kml.placemarks.all().has_coordinates()
+
+   # Calculate distances from center to all stores
+   distances = SpatialCalculations.distances_to_many(center, stores)
+
+   # Combine with store names for display
+   for store, distance in zip(stores, distances):
+       if distance is not None:
+           print(f"{store.name}: {distance:.1f} km")
+
+   # Sort by distance
+   store_distances = [(s, d) for s, d in zip(stores, distances) if d is not None]
+   store_distances.sort(key=lambda x: x[1])
+
+   print("\nClosest stores:")
+   for store, distance in store_distances[:5]:
+       print(f"  {store.name}: {distance:.1f} km")
 
 Working with Different Geometry Types
 -------------------------------------

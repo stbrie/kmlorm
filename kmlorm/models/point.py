@@ -163,6 +163,102 @@ class Coordinate:
         """
         return {"longitude": self.longitude, "latitude": self.latitude, "altitude": self.altitude}
 
+    def get_coordinates(self) -> Optional['Coordinate']:
+        """
+        Return self as the coordinate representation.
+
+        This method satisfies the HasCoordinates protocol, allowing Coordinate
+        objects to be used directly in spatial calculations.
+
+        Returns:
+            Self (this Coordinate object)
+        """
+        return self
+
+    def distance_to(
+        self,
+        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list],
+        unit: Optional['DistanceUnit'] = None
+    ) -> Optional[float]:
+        """
+        Calculate distance to another spatial object.
+
+        Args:
+            other: Target object with coordinates (Coordinate, Point, Placemark, or tuple)
+            unit: Distance unit (defaults to kilometers)
+
+        Returns:
+            Distance in specified units, or None if target has no coordinates
+
+        Examples:
+            >>> coord1 = Coordinate(longitude=-74.006, latitude=40.7128)  # NYC
+            >>> coord2 = Coordinate(longitude=-0.1276, latitude=51.5074)  # London
+            >>> distance = coord1.distance_to(coord2)
+            >>> print(f"Distance: {distance:.1f} km")
+
+            >>> # Different units
+            >>> from kmlorm.spatial import DistanceUnit
+            >>> distance_miles = coord1.distance_to(coord2, unit=DistanceUnit.MILES)
+        """
+        from ..spatial.calculations import SpatialCalculations, DistanceUnit
+        if unit is None:
+            unit = DistanceUnit.KILOMETERS
+        return SpatialCalculations.distance_between(self, other, unit)
+
+    def bearing_to(
+        self,
+        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
+    ) -> Optional[float]:
+        """
+        Calculate bearing to another spatial object.
+
+        Args:
+            other: Target object with coordinates
+
+        Returns:
+            Initial bearing in degrees (0-360), or None if target has no coordinates
+            0° = North, 90° = East, 180° = South, 270° = West
+
+        Examples:
+            >>> coord1 = Coordinate(longitude=0, latitude=0)
+            >>> coord2 = Coordinate(longitude=1, latitude=0)  # Due east
+            >>> bearing = coord1.bearing_to(coord2)
+            >>> print(f"Bearing: {bearing:.1f}°")  # Should be ~90°
+        """
+        from ..spatial.calculations import SpatialCalculations
+        return SpatialCalculations.bearing_between(self, other)
+
+    def midpoint_to(
+        self,
+        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
+    ) -> Optional['Coordinate']:
+        """
+        Find geographic midpoint to another spatial object.
+
+        Args:
+            other: Target object with coordinates
+
+        Returns:
+            Coordinate at the midpoint, or None if target has no coordinates
+
+        Examples:
+            >>> coord1 = Coordinate(longitude=0, latitude=0)
+            >>> coord2 = Coordinate(longitude=2, latitude=2)
+            >>> midpoint = coord1.midpoint_to(coord2)
+            >>> print(f"Midpoint: ({midpoint.longitude}, {midpoint.latitude})")
+        """
+        from ..spatial.calculations import SpatialCalculations
+        return SpatialCalculations.midpoint(self, other)
+
+    def __hash__(self) -> int:
+        """
+        Hash for caching support in spatial calculations.
+
+        Returns:
+            Hash based on longitude, latitude, and altitude
+        """
+        return hash((self.longitude, self.latitude, self.altitude))
+
 
 class Point(KMLElement):
     """
@@ -283,3 +379,83 @@ class Point(KMLElement):
             }
         )
         return base_dict
+
+    def get_coordinates(self) -> Optional['Coordinate']:
+        """
+        Return the coordinate representation of this point.
+
+        This method satisfies the HasCoordinates protocol, allowing Point
+        objects to be used directly in spatial calculations.
+
+        Returns:
+            The Coordinate object, or None if no coordinates are set
+        """
+        return self.coordinates
+
+    def distance_to(
+        self,
+        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list],
+        unit: Optional['DistanceUnit'] = None
+    ) -> Optional[float]:
+        """
+        Calculate distance to another spatial object.
+
+        Args:
+            other: Target object with coordinates
+            unit: Distance unit (defaults to kilometers)
+
+        Returns:
+            Distance in specified units, or None if this point or target has no coordinates
+
+        Examples:
+            >>> point1 = Point(coordinates=(0, 0))
+            >>> point2 = Point(coordinates=(1, 1))
+            >>> distance = point1.distance_to(point2)
+        """
+        if not self.coordinates:
+            return None
+        return self.coordinates.distance_to(other, unit)
+
+    def bearing_to(
+        self,
+        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
+    ) -> Optional[float]:
+        """
+        Calculate bearing to another spatial object.
+
+        Args:
+            other: Target object with coordinates
+
+        Returns:
+            Initial bearing in degrees (0-360), or None if this point or target has no coordinates
+
+        Examples:
+            >>> point1 = Point(coordinates=(0, 0))
+            >>> point2 = Point(coordinates=(1, 0))  # Due east
+            >>> bearing = point1.bearing_to(point2)  # Should be ~90°
+        """
+        if not self.coordinates:
+            return None
+        return self.coordinates.bearing_to(other)
+
+    def midpoint_to(
+        self,
+        other: Union['Coordinate', 'Point', 'Placemark', Tuple[float, float], list]
+    ) -> Optional['Coordinate']:
+        """
+        Find geographic midpoint to another spatial object.
+
+        Args:
+            other: Target object with coordinates
+
+        Returns:
+            Coordinate at the midpoint, or None if this point or target has no coordinates
+
+        Examples:
+            >>> point1 = Point(coordinates=(0, 0))
+            >>> point2 = Point(coordinates=(2, 2))
+            >>> midpoint = point1.midpoint_to(point2)
+        """
+        if not self.coordinates:
+            return None
+        return self.coordinates.midpoint_to(other)
