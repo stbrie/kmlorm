@@ -5,7 +5,18 @@ All notable changes to the KML ORM project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-09-28
+## [Unreleased]
+
+### Fixed
+
+- **Recursive `.all()` collection from folders** - Fixed critical bug where `folder.placemarks.all()` only returned direct children instead of all nested elements
+  - `.all()` now correctly returns ALL elements recursively when called from a folder
+  - Example: `folder.placemarks.all()` now returns placemarks from the folder AND all nested subfolders
+  - Affects all element types: placemarks, folders, paths, polygons, points, multigeometries
+  - This fix makes the API work as documented and intended
+  - Updated documentation examples in tutorial.rst and KML_ORM_SPECIFICATION.md to reflect correct behavior
+
+## [1.0.1] - 2025-09-28
 
 ### Major Release - Production Ready
 
