@@ -110,35 +110,26 @@ those in nested folders. Use ``kml.placemarks.children()`` for direct
 children only.
 
 .. note::
-   When called on a folder object, ``folder.placemarks.all()`` currently
-   behaves the same as ``folder.placemarks.children()`` - it returns only
-   direct children and does not traverse nested subfolders.
-
-To get all placemarks within a folder including those in nested subfolders,
-filter from the root:
+   As of version 1.0.1, ``folder.placemarks.all()`` correctly returns ALL
+   placemarks including those in nested subfolders, while ``folder.placemarks.children()``
+   returns only direct children.
 
 .. code-block:: python
 
    # Get all placemarks in Supply Locations folder and its subfolders
    supply_folder = kml.folders.children().get(name='Supply Locations')
 
-   # This only gets direct children (2 placemarks)
+   # Get only direct children (2 placemarks)
    direct_only = supply_folder.placemarks.children()
+   print(len(direct_only))  # 2 (Capital Electric Supply, Electric Depot)
 
-   # To get ALL placemarks including nested ones, filter from root
-   # by checking if placemark's parent hierarchy includes the folder
-   def get_all_nested_placemarks(folder):
-       """Get all placemarks in folder including nested subfolders."""
-       result = []
-       # Add direct placemarks
-       result.extend(folder.placemarks.children())
-       # Recursively add from subfolders
-       for subfolder in folder.folders.children():
-           result.extend(get_all_nested_placemarks(subfolder))
-       return result
+   # Get ALL placemarks including nested ones (3 placemarks)
+   all_nested = supply_folder.placemarks.all()
+   print(len(all_nested))  # 3 (includes Main Warehouse from nested folder)
 
-   # Now this gets all 3 placemarks (2 direct + 1 in Warehouse subfolder)
-   all_nested = get_all_nested_placemarks(supply_folder)
+   # The same pattern works for folders
+   direct_folders = supply_folder.folders.children()  # Only direct subfolders
+   all_folders = supply_folder.folders.all()  # All nested folders at any depth
 
 Spatial Operations
 ------------------

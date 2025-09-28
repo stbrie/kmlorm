@@ -231,10 +231,10 @@ bounds = kml.placemarks.aggregate(
 ```python
 # Navigate folder hierarchy
 supply_folder = kml.folders.get(name='capital electric supply')
-folder_places = supply_folder.placemarks.all()
+folder_places = supply_folder.placemarks.all()  # Gets ALL placemarks including nested
 
 # Nested folder access
-all_subfolders = supply_folder.folders.all()
+all_subfolders = supply_folder.folders.all()  # Gets ALL nested folders at any depth
 
 # Cross-folder queries
 all_capital_places = kml.placemarks.filter(name__icontains='capital')
