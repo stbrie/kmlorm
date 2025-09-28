@@ -23,7 +23,9 @@ class TestKMLFileDocsExamples:
     simple_kml_content: str
 
     @pytest.fixture(autouse=True)
-    def setup_kml_files(self, sample_kml_content: str, simple_kml_content: str) -> Generator[None, None, None]:
+    def setup_kml_files(
+        self, sample_kml_content: str, simple_kml_content: str
+    ) -> Generator[None, None, None]:
         """Set up test fixtures using centralized KML content."""
         # Use fixture from conftest for comprehensive content
         self.comprehensive_kml_content = sample_kml_content

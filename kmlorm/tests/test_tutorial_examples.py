@@ -512,9 +512,9 @@ class TestTutorialExamples:
     def test_custom_extensions(self) -> None:
         """Test custom extensions section - lines 461-478 of tutorial.rst."""
         # pylint: disable=import-outside-toplevel
-        from kmlorm import Placemark
+        from kmlorm import Placemark as PlacemarkBase
 
-        class Store(Placemark):
+        class Store(PlacemarkBase):
             """Custom Store class extending Placemark."""
 
             @property
@@ -554,13 +554,12 @@ class TestTutorialExamples:
         # Test with folders
         supply_folder = kml.folders.children().get(name="Supply Locations")
 
-        # NOTE: Current limitation - folder.placemarks.all() doesn't traverse nested folders
-        # It behaves the same as children() for folder-level managers
-        # Only kml.placemarks.all() includes nested folders
+        # After bugfix: folder.placemarks.all() now correctly traverses nested folders
+        # It returns ALL placemarks including those in nested folders
         all_in_folder = supply_folder.placemarks.all()
-        assert len(all_in_folder) == 2  # Does NOT include nested warehouse placemark
+        assert len(all_in_folder) == 3  # Now includes nested warehouse placemark
 
-        # children() returns direct children
+        # children() returns direct children only
         direct_in_folder = supply_folder.placemarks.children()
         assert len(direct_in_folder) == 2  # Only direct children
 
@@ -569,10 +568,10 @@ class TestTutorialExamples:
         assert direct_names == {"Capital Electric Supply", "Electric Depot"}
 
         all_names = {p.name for p in all_in_folder}
-        assert all_names == {"Capital Electric Supply", "Electric Depot"}
+        assert all_names == {"Capital Electric Supply", "Electric Depot", "Main Warehouse"}
 
-        # To get truly ALL placemarks including nested, must use kml.placemarks.all()
-        # and then filter if needed
+        # The bugfix means .all() now correctly includes nested elements
+        # No workaround needed anymore!
 
     def test_get_all_nested_placemarks_workaround(self) -> None:
         """Test workaround for getting all nested placemarks - lines 122-141."""

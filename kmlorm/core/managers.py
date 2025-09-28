@@ -111,16 +111,75 @@ class KMLManager(Generic[T]):
             >>> # For direct children only, use .children()
             >>> root_placemarks = kml.placemarks.children()
         """
-        # Always include nested elements
-        if not self._folders_manager:
-            return self.get_queryset()
-
-        # Implementation of flattening logic
+        # Start with direct children
         all_elements = list(self.elements)
-        all_elements.extend(self._collect_folder_elements())
+
+        # If we have a folders manager (KML root case), use the existing logic
+        if self._folders_manager:
+            all_elements.extend(self._collect_folder_elements())
+        # If we have a parent (folder case), collect from nested folders
+        elif hasattr(self, "_parent") and getattr(self, "_parent", None) and hasattr(getattr(self, "_parent"), "folders"):
+            all_elements.extend(self._collect_from_parent_folders())
+
+        # Deduplicate elements
+        return self._deduplicate_elements(all_elements)
+
+    def _collect_from_parent_folders(self) -> List[T]:
+        """
+        Collect elements from parent's nested folders.
+
+        Returns:
+            List of elements from nested folders
+        """
+        elements: List[T] = []
+        attribute_name = self._get_manager_attribute_name()
+        if not attribute_name:
+            return elements
+
+        parent = getattr(self, "_parent")
+        parent_folders = getattr(parent, "folders", None)
+        if not parent_folders:
+            return elements
+
+        if attribute_name == "folders":
+            # For folders, get all nested folders
+            for folder in parent_folders.children():
+                elements.append(cast(T, folder))
+                # Recursively get nested folders
+                subfolder_manager = getattr(folder, "folders", None)
+                if subfolder_manager:
+                    elements.extend(subfolder_manager.all())
+        else:
+            # For other element types, collect from all nested folders
+            for folder in parent_folders.children():
+                # Get elements from this folder
+                folder_manager = getattr(folder, attribute_name, None)
+                if folder_manager:
+                    elements.extend(list(folder_manager.children()))
+                # Recursively collect from nested folders
+                subfolder_manager = getattr(folder, "folders", None)
+                if subfolder_manager:
+                    all_nested_folders = subfolder_manager.all()
+                    for nested_folder in all_nested_folders:
+                        nested_manager = getattr(nested_folder, attribute_name, None)
+                        if nested_manager:
+                            elements.extend(list(nested_manager.children()))
+
+        return elements
+
+    def _deduplicate_elements(self, elements: List[T]) -> "KMLQuerySet[T]":
+        """
+        Remove duplicate elements from list.
+
+        Args:
+            elements: List of elements that may contain duplicates
+
+        Returns:
+            QuerySet with unique elements
+        """
         seen_ids = set()
         deduped = []
-        for el in all_elements:
+        for el in elements:
             el_id = id(el)
             if el_id not in seen_ids:
                 seen_ids.add(el_id)
@@ -171,55 +230,37 @@ class KMLManager(Generic[T]):
             return elements
 
         if attribute_name == "folders":
-            # For folders, collect all root and nested folders recursively
-            def collect_all_folders(folder: Any, depth: int = 0) -> list:
-                # Debug: visiting folder at depth can be logged here if needed
-                result = [folder]
-                subfolders = getattr(folder, "folders", None)
-                if subfolders:
-                    for subfolder in subfolders.children():
-                        result.extend(collect_all_folders(subfolder, depth + 1))
-                return result
-
+            # For folders, use recursive .all() on the folders manager itself
+            # This will properly collect all nested folders
             for folder in self._folders_manager.children():
-                # Debug: starting recursion from root folder can be logged here if needed
-                elements.extend(collect_all_folders(folder))
+                # Add the folder itself
+                elements.append(cast(T, folder))
+                # Recursively collect all nested folders
+                subfolder_manager = getattr(folder, "folders", None)
+                if subfolder_manager:
+                    # Use .all() recursively to get all nested folders
+                    elements.extend(subfolder_manager.all())
         else:
+            # For other element types, we need to:
+            # 1. Get elements from direct child folders
+            # 2. Recursively get elements from ALL nested folders
+
+            # First, collect from direct child folders
             for folder in self._folders_manager.children():
                 folder_manager = getattr(folder, attribute_name, None)
                 if folder_manager:
                     elements.extend(list(folder_manager.children()))
-                elements.extend(self._collect_elements_from_folder(folder, attribute_name))
 
-        return elements
-
-    def _collect_elements_from_folder(self, folder: "KMLElement", attribute_name: str) -> List[T]:
-        """
-        Recursively collect elements from a folder and its subfolders.
-
-        Args:
-            folder: Folder to collect elements from
-            attribute_name: Name of the manager attribute (e.g., 'placemarks', 'paths')
-
-        Returns:
-            List of elements from folder and subfolders
-        """
-        elements: List[T] = []
-        subfolders = getattr(cast("Folder", folder), "folders", None)
-        if not subfolders:
-            return elements
-
-        for subfolder in subfolders.children():
-            if attribute_name == "folders":
-                # For folders, add the subfolder itself
-                elements.append(subfolder)
-                # And recurse to collect deeper nested folders
-                elements.extend(self._collect_elements_from_folder(subfolder, attribute_name))
-            else:
-                subfolder_manager = getattr(subfolder, attribute_name, None)
+                # Then recursively collect from all nested subfolders
+                subfolder_manager = getattr(folder, "folders", None)
                 if subfolder_manager:
-                    elements.extend(list(subfolder_manager.children()))
-                elements.extend(self._collect_elements_from_folder(subfolder, attribute_name))
+                    # Get ALL nested folders (not just direct children)
+                    all_nested_folders = subfolder_manager.all()
+                    for nested_folder in all_nested_folders:
+                        nested_manager = getattr(nested_folder, attribute_name, None)
+                        if nested_manager:
+                            elements.extend(list(nested_manager.children()))
+
         return elements
 
     def _get_manager_attribute_name(self) -> Optional[str]:
