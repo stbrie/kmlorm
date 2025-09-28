@@ -118,7 +118,11 @@ class KMLManager(Generic[T]):
         if self._folders_manager:
             all_elements.extend(self._collect_folder_elements())
         # If we have a parent (folder case), collect from nested folders
-        elif hasattr(self, "_parent") and getattr(self, "_parent", None) and hasattr(getattr(self, "_parent"), "folders"):
+        elif (
+            hasattr(self, "_parent")
+            and getattr(self, "_parent", None)
+            and hasattr(getattr(self, "_parent"), "folders")
+        ):
             all_elements.extend(self._collect_from_parent_folders())
 
         # Deduplicate elements
