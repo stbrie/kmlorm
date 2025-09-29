@@ -173,6 +173,9 @@ The built HTML documentation will be available in `docs/build/html/index.html`.
 - **API Reference**: `docs/source/api/`
 - **Examples**: `docs/source/examples.rst`
 
+### Online Documentation
+
+This documentation is also available online at [kmlorm.readthedocs.io](https://kmlorm.readthedocs.io/)
 ## Namespaces & Google Earth gx extensions
 
 The project parses KML 2.2 data and commonly-seen Google Earth attributes. Use these namespace URIs when querying or generating KML:
